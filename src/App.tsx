@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 
-// --- TYPES ---
 type Profile = 'Roxanne' | 'Diana';
 
 interface ExerciseLog {
@@ -44,23 +43,16 @@ export default function App() {
   const [activeProfile, setActiveProfile] = useState<Profile>('Roxanne');
   const [activeTab, setActiveTab] = useState<'plan' | 'log' | 'history' | 'equipment'>('plan');
 
-  // Theme Styling Engine
   const isRoxanne = activeProfile === 'Roxanne';
-  
-  const theme = {
-    gradientHeader: isRoxanne 
-      ? 'from-amber-600 via-orange-600 to-red-600' 
-      : 'from-purple-700 via-fuchsia-600 to-indigo-700',
-    primaryBg: isRoxanne ? 'bg-orange-600' : 'bg-purple-600',
-    primaryHover: isRoxanne ? 'hover:bg-orange-500' : 'hover:bg-purple-500',
-    primaryText: isRoxanne ? 'text-orange-400' : 'text-purple-400',
-    primaryBorder: isRoxanne ? 'border-orange-500/40' : 'border-purple-500/40',
-    cardGlow: isRoxanne ? 'shadow-orange-950/40 border-orange-500/20' : 'shadow-purple-950/40 border-purple-500/20',
-    activeTabClass: isRoxanne ? 'bg-orange-500 text-white shadow-orange-500/30' : 'bg-purple-600 text-white shadow-purple-600/30',
-    badgeBg: isRoxanne ? 'bg-orange-950/80 text-orange-300 border-orange-500/30' : 'bg-purple-950/80 text-purple-300 border-purple-500/30',
-  };
 
-  // Local Storage State
+  // Dynamic Styles
+  const primaryColor = isRoxanne ? '#ea580c' : '#8b5cf6';
+  const primaryGradient = isRoxanne 
+    ? 'linear-gradient(135deg, #d97706, #ea580c, #dc2626)' 
+    : 'linear-gradient(135deg, #6b21a8, #8b5cf6, #4c1d95)';
+  const badgeBg = isRoxanne ? 'rgba(234, 88, 12, 0.2)' : 'rgba(139, 92, 246, 0.2)';
+  const badgeBorder = isRoxanne ? '#ea580c' : '#8b5cf6';
+
   const [equipment, setEquipment] = useState<string[]>(() => {
     const saved = localStorage.getItem('duofit_equipment');
     return saved
@@ -73,7 +65,6 @@ export default function App() {
     return saved ? JSON.parse(saved) : [];
   });
 
-  // Logging Form State
   const [workoutType, setWorkoutType] = useState<'Strength' | 'Cardio' | 'Conditioning' | 'Mixed'>('Strength');
   const [workoutTitle, setWorkoutTitle] = useState('');
   const [cardioActivity, setCardioActivity] = useState('Concept2 Rower / Outdoor Run');
@@ -84,7 +75,6 @@ export default function App() {
   ]);
   const [notes, setNotes] = useState('');
 
-  // Save to Local Storage
   useEffect(() => {
     localStorage.setItem('duofit_equipment', JSON.stringify(equipment));
   }, [equipment]);
@@ -160,71 +150,81 @@ export default function App() {
   const profileLogs = workoutLogs.filter((log) => log.profile === activeProfile);
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans p-4 md:p-8 transition-colors duration-500">
-      <div className="max-w-4xl mx-auto space-y-6">
+    <div style={{ backgroundColor: '#090d16', minHeight: '100vh', color: '#f1f5f9', fontFamily: 'sans-serif', padding: '16px' }}>
+      <div style={{ maxWidth: '800px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '20px' }}>
 
-        {/* Dynamic Glowing Header */}
-        <header className={`bg-gradient-to-r ${theme.gradientHeader} p-6 rounded-3xl shadow-2xl space-y-4 relative overflow-hidden`}>
-          <div className="absolute -right-10 -bottom-10 opacity-15 text-9xl select-none">
-            {isRoxanne ? '🔥' : '👑'}
-          </div>
-
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
+        {/* Dynamic Gradient Header */}
+        <header style={{
+          background: primaryGradient,
+          padding: '24px',
+          borderRadius: '24px',
+          boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '16px'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
             <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-3xl font-black text-white tracking-wider">DUOFIT TRACKER</h1>
-                <span className="text-xs bg-white/20 backdrop-blur-md px-2.5 py-0.5 rounded-full font-bold text-white">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <h1 style={{ fontSize: '26px', fontWeight: '900', color: '#ffffff', margin: 0 }}>DUOFIT TRACKER</h1>
+                <span style={{ fontSize: '11px', background: 'rgba(255,255,255,0.25)', padding: '2px 8px', borderRadius: '12px', fontWeight: 'bold' }}>
                   Garage Edition
                 </span>
               </div>
-              <p className="text-xs text-white/80 font-medium mt-1">
+              <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.9)', marginTop: '4px', margin: 0 }}>
                 {isRoxanne ? '⚡ Sunset Orange Mode (Roxanne)' : '💜 Royal Purple Mode (Diana)'}
               </p>
             </div>
 
             {/* Profile Switcher */}
-            <div className="flex items-center bg-slate-950/60 backdrop-blur-md p-1.5 rounded-2xl border border-white/20">
+            <div style={{ background: 'rgba(15, 23, 42, 0.7)', padding: '4px', borderRadius: '16px', display: 'flex', gap: '4px' }}>
               <button
                 onClick={() => setActiveProfile('Roxanne')}
-                className={`px-4 py-2 rounded-xl text-xs font-black transition-all ${
-                  isRoxanne
-                    ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-lg scale-105 ring-2 ring-white/50'
-                    : 'text-slate-300 hover:text-white'
-                }`}
+                style={{
+                  padding: '8px 16px',
+                  borderRadius: '12px',
+                  border: 'none',
+                  fontWeight: 'bold',
+                  fontSize: '12px',
+                  cursor: 'pointer',
+                  background: isRoxanne ? '#ea580c' : 'transparent',
+                  color: '#ffffff',
+                }}
               >
                 🔥 Roxanne
               </button>
               <button
                 onClick={() => setActiveProfile('Diana')}
-                className={`px-4 py-2 rounded-xl text-xs font-black transition-all ${
-                  !isRoxanne
-                    ? 'bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white shadow-lg scale-105 ring-2 ring-white/50'
-                    : 'text-slate-300 hover:text-white'
-                }`}
+                style={{
+                  padding: '8px 16px',
+                  borderRadius: '12px',
+                  border: 'none',
+                  fontWeight: 'bold',
+                  fontSize: '12px',
+                  cursor: 'pointer',
+                  background: !isRoxanne ? '#8b5cf6' : 'transparent',
+                  color: '#ffffff',
+                }}
               >
                 👑 Diana
               </button>
             </div>
           </div>
 
-          {/* User Quick Stats Bar */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-2 border-t border-white/20 text-xs">
-            <div className="bg-slate-950/40 backdrop-blur-sm p-2 rounded-xl border border-white/10 flex items-center justify-between">
-              <span className="text-white/70">Logged Sessions:</span>
-              <span className="font-black text-white text-sm">{profileLogs.length}</span>
+          {/* Quick Stats Bar */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '8px' }}>
+            <div style={{ background: 'rgba(15, 23, 42, 0.5)', padding: '8px 12px', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
+              <span style={{ color: 'rgba(255,255,255,0.7)' }}>Sessions:</span>
+              <strong style={{ color: '#fff' }}>{profileLogs.length}</strong>
             </div>
-            <div className="bg-slate-950/40 backdrop-blur-sm p-2 rounded-xl border border-white/10 flex items-center justify-between">
-              <span className="text-white/70">Active Gear:</span>
-              <span className="font-black text-white text-sm">{equipment.length} Items</span>
-            </div>
-            <div className="bg-slate-950/40 backdrop-blur-sm p-2 rounded-xl border border-white/10 flex items-center justify-between col-span-2 sm:col-span-1">
-              <span className="text-white/70">Status:</span>
-              <span className="font-black text-emerald-300 text-xs"> Ready to Work</span>
+            <div style={{ background: 'rgba(15, 23, 42, 0.5)', padding: '8px 12px', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
+              <span style={{ color: 'rgba(255,255,255,0.7)' }}>Active Gear:</span>
+              <strong style={{ color: '#fff' }}>{equipment.length} Items</strong>
             </div>
           </div>
 
-          {/* Navigation Bar */}
-          <nav className="flex flex-wrap gap-2 pt-2 justify-center relative z-10">
+          {/* Nav Tabs */}
+          <nav style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyWait: 'center' }}>
             {[
               { id: 'plan', label: '📋 Custom Plan' },
               { id: 'log', label: '⚡ Log Workout' },
@@ -234,11 +234,16 @@ export default function App() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`px-4 py-2 text-xs md:text-sm font-extrabold rounded-xl transition shadow-md ${
-                  activeTab === tab.id
-                    ? `${theme.activeTabClass} ring-2 ring-white/50 scale-105`
-                    : 'bg-slate-950/60 text-slate-200 hover:bg-slate-900'
-                }`}
+                style={{
+                  padding: '8px 14px',
+                  borderRadius: '12px',
+                  border: 'none',
+                  fontSize: '12px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  background: activeTab === tab.id ? '#ffffff' : 'rgba(15, 23, 42, 0.6)',
+                  color: activeTab === tab.id ? primaryColor : '#ffffff',
+                }}
               >
                 {tab.label}
               </button>
@@ -246,333 +251,192 @@ export default function App() {
           </nav>
         </header>
 
-        {/* CUSTOM PLAN GENERATOR TAB */}
+        {/* CUSTOM PLAN TAB */}
         {activeTab === 'plan' && (
-          <main className={`bg-slate-900/90 backdrop-blur-md p-6 rounded-3xl border shadow-2xl space-y-6 ${theme.cardGlow}`}>
-            <div className="border-b border-slate-800 pb-3 flex justify-between items-center">
+          <main style={{ background: '#1e293b', padding: '20px', borderRadius: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div style={{ borderBottom: '1px solid #334155', paddingBottom: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
-                <h2 className={`text-xl font-black ${theme.primaryText}`}>
-                  {isRoxanne ? '🔥 Roxanne\'s Tailored Garage Routine' : '👑 Diana\'s Custom Workout Plan'}
+                <h2 style={{ fontSize: '18px', fontWeight: 'bold', color: primaryColor, margin: 0 }}>
+                  {isRoxanne ? '🔥 Roxanne\'s Tailored Routine' : '👑 Diana\'s Custom Workout Plan'}
                 </h2>
-                <p className="text-xs text-slate-400">Smart-generated based on your current {equipment.length} active garage items.</p>
+                <p style={{ fontSize: '12px', color: '#94a3b8', margin: '4px 0 0 0' }}>Generated for your {equipment.length} active garage items.</p>
               </div>
-              <button
-                onClick={() => setActiveTab('equipment')}
-                className={`text-xs px-3 py-1.5 rounded-xl border font-bold ${theme.badgeBg}`}
-              >
-                Edit Active Gear
-              </button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Session 1 */}
-              <div className="bg-slate-950 p-5 rounded-2xl border border-slate-800 space-y-3 relative hover:border-slate-700 transition">
-                <div className="flex justify-between items-center">
-                  <h3 className={`font-bold text-sm ${theme.primaryText}`}>🏃 Session 1: Cardio & Endurance</h3>
-                  <span className="text-[10px] bg-cyan-950 text-cyan-400 border border-cyan-500/30 px-2 py-0.5 rounded-full font-bold">Aerobic</span>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '12px' }}>
+              {/* Session Cards */}
+              {[
+                {
+                  title: '🏃 Session 1: Cardio & Endurance',
+                  tag: 'Aerobic',
+                  items: [
+                    equipment.includes('rower') && 'Concept2 Rower: 500m Interval Sprints (5 sets)',
+                    equipment.includes('airbike') && 'Assault AirBike: 20/10 Calorie Intervals (15 mins)',
+                    equipment.includes('plyo_boxes') && 'Jump Rope Warm-up (3x2 mins)',
+                    'Outdoor Long-Distance Run / Endurance Tempo Walk',
+                  ].filter(Boolean),
+                  type: 'Cardio' as const,
+                },
+                {
+                  title: '🏋️ Session 2: Rack & Bench Heavy Strength',
+                  tag: 'Strength',
+                  items: [
+                    equipment.includes('bench') && equipment.includes('barbell') && 'NordicTrack Bench Press (Flat/Incline 4x8)',
+                    equipment.includes('bench') && equipment.includes('dumbbells') && 'Incline Dumbbell Chest Flyes & Rows (3x10)',
+                    equipment.includes('barbell') && 'Titan Rack Barbell Squats or Deadlifts (4x8)',
+                    equipment.includes('rack') && 'Landmine Rotations & Presses (3x10)',
+                  ].filter(Boolean),
+                  type: 'Strength' as const,
+                },
+                {
+                  title: '💥 Session 3: Full Body Conditioning',
+                  tag: 'Conditioning',
+                  items: [
+                    equipment.includes('med_slam_balls') && 'Medicine Ball Wall Balls or Russian Twists (4x15)',
+                    equipment.includes('kettlebell') && 'Heavy Kettlebell Swings (4x15)',
+                    equipment.includes('plyo_boxes') && 'Plyo Box Step-ups or Jump Squats (3x12)',
+                  ].filter(Boolean),
+                  type: 'Conditioning' as const,
+                },
+              ].map((s, idx) => (
+                <div key={idx} style={{ background: '#0f172a', padding: '16px', borderRadius: '16px', border: '1px solid #334155', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <h3 style={{ fontSize: '14px', fontWeight: 'bold', color: primaryColor, margin: 0 }}>{s.title}</h3>
+                    <span style={{ fontSize: '10px', background: badgeBg, border: `1px solid ${badgeBorder}`, color: primaryColor, padding: '2px 6px', borderRadius: '8px' }}>{s.tag}</span>
+                  </div>
+                  <ul style={{ fontSize: '12px', color: '#cbd5e1', paddingLeft: '16px', margin: 0 }}>
+                    {s.items.map((item, i) => <li key={i}>{item}</li>)}
+                  </ul>
+                  <button
+                    onClick={() => startPlanSession(s.title, s.type)}
+                    style={{ marginTop: 'auto', background: primaryColor, color: '#fff', border: 'none', padding: '8px', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer', fontSize: '12px' }}
+                  >
+                    Start Session 🚀
+                  </button>
                 </div>
-                <ul className="text-xs text-slate-300 space-y-1.5 list-disc list-inside">
-                  {equipment.includes('rower') && <li>Concept2 Rower: 500m Interval Sprints (5 sets)</li>}
-                  {equipment.includes('airbike') && <li>Assault AirBike: 20/10 Calorie Intervals (15 mins)</li>}
-                  {equipment.includes('plyo_boxes') && <li>Jump Rope Warm-up (3x2 mins)</li>}
-                  <li>Outdoor Long-Distance Run / Endurance Tempo Walk</li>
-                </ul>
-                <button
-                  onClick={() => startPlanSession('Cardio & Endurance Interval', 'Cardio')}
-                  className={`w-full mt-2 py-2 text-xs font-black text-white rounded-xl transition ${theme.primaryBg} ${theme.primaryHover}`}
-                >
-                  Start This Session 🚀
-                </button>
-              </div>
-
-              {/* Session 2 */}
-              <div className="bg-slate-950 p-5 rounded-2xl border border-slate-800 space-y-3 relative hover:border-slate-700 transition">
-                <div className="flex justify-between items-center">
-                  <h3 className={`font-bold text-sm ${theme.primaryText}`}>🏋️ Session 2: Rack & Bench Heavy Strength</h3>
-                  <span className="text-[10px] bg-emerald-950 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full font-bold">Strength</span>
-                </div>
-                <ul className="text-xs text-slate-300 space-y-1.5 list-disc list-inside">
-                  {equipment.includes('bench') && equipment.includes('barbell') && <li>NordicTrack Bench Press (Flat / Incline 4x8)</li>}
-                  {equipment.includes('bench') && equipment.includes('dumbbells') && <li>Incline Dumbbell Chest Flyes & DB Rows (3x10)</li>}
-                  {equipment.includes('barbell') && <li>Titan Rack Barbell Squats or Deadlifts (4x8)</li>}
-                  {equipment.includes('rack') && <li>Landmine Rotations & Presses (3x10)</li>}
-                  {equipment.includes('cables') && <li>Cable Triceps Pushdowns & Lat Pulldowns (3x12)</li>}
-                </ul>
-                <button
-                  onClick={() => startPlanSession('Rack & Bench Power Session', 'Strength')}
-                  className={`w-full mt-2 py-2 text-xs font-black text-white rounded-xl transition ${theme.primaryBg} ${theme.primaryHover}`}
-                >
-                  Start This Session 🚀
-                </button>
-              </div>
-
-              {/* Session 3 */}
-              <div className="bg-slate-950 p-5 rounded-2xl border border-slate-800 space-y-3 relative hover:border-slate-700 transition">
-                <div className="flex justify-between items-center">
-                  <h3 className={`font-bold text-sm ${theme.primaryText}`}>💥 Session 3: Full Body Conditioning</h3>
-                  <span className="text-[10px] bg-violet-950 text-violet-400 border border-violet-500/30 px-2 py-0.5 rounded-full font-bold">Conditioning</span>
-                </div>
-                <ul className="text-xs text-slate-300 space-y-1.5 list-disc list-inside">
-                  {equipment.includes('med_slam_balls') && <li>Medicine Ball Wall Balls or Russian Twists (4x15)</li>}
-                  {equipment.includes('kettlebell') && <li>Heavy Kettlebell Swings (4x15)</li>}
-                  {equipment.includes('plyo_boxes') && <li>Plyo Box Step-ups or Jump Squats (3x12)</li>}
-                  {equipment.includes('bench') && <li>NordicTrack Bench Dips (3x15)</li>}
-                </ul>
-                <button
-                  onClick={() => startPlanSession('Full Body Conditioning Circuit', 'Conditioning')}
-                  className={`w-full mt-2 py-2 text-xs font-black text-white rounded-xl transition ${theme.primaryBg} ${theme.primaryHover}`}
-                >
-                  Start This Session 🚀
-                </button>
-              </div>
-
-              {/* Session 4 */}
-              <div className="bg-slate-950 p-5 rounded-2xl border border-slate-800 space-y-3 relative hover:border-slate-700 transition">
-                <div className="flex justify-between items-center">
-                  <h3 className={`font-bold text-sm ${theme.primaryText}`}>🧘 Session 4: Active Recovery & Mobility</h3>
-                  <span className="text-[10px] bg-amber-950 text-amber-400 border border-amber-500/30 px-2 py-0.5 rounded-full font-bold">Mobility</span>
-                </div>
-                <p className="text-xs text-slate-300 leading-relaxed">
-                  {equipment.includes('recovery_mat')
-                    ? '20-30 min Foam Rolling, Yoga Wheel spine decompression, dynamic mobility flow, and AbMat core work.'
-                    : '20 min Light Recovery Walk and Dynamic Mobility Stretches.'}
-                </p>
-                <button
-                  onClick={() => startPlanSession('Active Recovery & Foam Rolling', 'Mixed')}
-                  className={`w-full mt-2 py-2 text-xs font-black text-white rounded-xl transition ${theme.primaryBg} ${theme.primaryHover}`}
-                >
-                  Start This Session 🚀
-                </button>
-              </div>
+              ))}
             </div>
           </main>
         )}
 
         {/* LOG WORKOUT TAB */}
         {activeTab === 'log' && (
-          <main className={`bg-slate-900/90 backdrop-blur-md p-6 rounded-3xl border shadow-2xl space-y-6 ${theme.cardGlow}`}>
-            <div className="border-b border-slate-800 pb-3 flex justify-between items-center">
-              <h2 className={`text-xl font-black ${theme.primaryText}`}>Log Workout for {activeProfile}</h2>
-              <div className="flex gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800">
-                {(['Strength', 'Cardio', 'Conditioning', 'Mixed'] as const).map((t) => (
-                  <button
-                    key={t}
-                    type="button"
-                    onClick={() => setWorkoutType(t)}
-                    className={`px-3 py-1 text-xs font-bold rounded-lg transition ${
-                      workoutType === t ? `${theme.primaryBg} text-white` : 'text-slate-400 hover:text-slate-200'
-                    }`}
-                  >
-                    {t}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <form onSubmit={handleSaveWorkout} className="space-y-4">
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-300">Workout Name / Title</label>
+          <main style={{ background: '#1e293b', padding: '20px', borderRadius: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <h2 style={{ fontSize: '18px', fontWeight: 'bold', color: primaryColor, margin: 0 }}>Log Workout for {activeProfile}</h2>
+            
+            <form onSubmit={handleSaveWorkout} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div>
+                <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#cbd5e1', display: 'block', marginBottom: '4px' }}>Workout Title</label>
                 <input
                   type="text"
-                  placeholder="e.g., Garage Bench Press & Rows, Concept2 Rower Sprints..."
+                  placeholder="e.g., Garage Bench Press & Rows"
                   value={workoutTitle}
                   onChange={(e) => setWorkoutTitle(e.target.value)}
                   required
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-slate-100 focus:outline-none focus:border-slate-500"
+                  style={{ width: '100%', background: '#0f172a', border: '1px solid #334155', borderRadius: '10px', padding: '10px', color: '#fff', boxSizing: 'border-box' }}
                 />
               </div>
 
-              {/* Cardio Fields */}
-              {workoutType !== 'Strength' && (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 bg-slate-950 p-4 rounded-2xl border border-slate-800">
-                  <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-300">Activity</label>
-                    <input
-                      type="text"
-                      value={cardioActivity}
-                      onChange={(e) => setCardioActivity(e.target.value)}
-                      className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-300">Distance (Miles)</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      placeholder="e.g., 3.5"
-                      value={distance}
-                      onChange={(e) => setDistance(e.target.value)}
-                      className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-300">Duration (Minutes)</label>
-                    <input
-                      type="number"
-                      placeholder="e.g., 45"
-                      value={duration}
-                      onChange={(e) => setDuration(e.target.value)}
-                      className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100"
-                    />
-                  </div>
+              {exercises.map((ex) => (
+                <div key={ex.id} style={{ display: 'flex', gap: '8px', alignItems: 'center', background: '#0f172a', padding: '8px', borderRadius: '10px' }}>
+                  <input
+                    type="text"
+                    placeholder="Exercise"
+                    value={ex.name}
+                    onChange={(e) => updateExercise(ex.id, 'name', e.target.value)}
+                    style={{ flex: 2, background: '#1e293b', border: '1px solid #334155', borderRadius: '6px', padding: '6px', color: '#fff', fontSize: '12px' }}
+                  />
+                  <input
+                    type="number"
+                    placeholder="Sets"
+                    value={ex.sets || ''}
+                    onChange={(e) => updateExercise(ex.id, 'sets', parseInt(e.target.value) || 0)}
+                    style={{ flex: 1, background: '#1e293b', border: '1px solid #334155', borderRadius: '6px', padding: '6px', color: '#fff', fontSize: '12px', textAlign: 'center' }}
+                  />
+                  <input
+                    type="number"
+                    placeholder="Reps"
+                    value={ex.reps || ''}
+                    onChange={(e) => updateExercise(ex.id, 'reps', parseInt(e.target.value) || 0)}
+                    style={{ flex: 1, background: '#1e293b', border: '1px solid #334155', borderRadius: '6px', padding: '6px', color: '#fff', fontSize: '12px', textAlign: 'center' }}
+                  />
+                  <input
+                    type="number"
+                    placeholder="lbs"
+                    value={ex.weight || ''}
+                    onChange={(e) => updateExercise(ex.id, 'weight', parseFloat(e.target.value) || 0)}
+                    style={{ flex: 1, background: '#1e293b', border: '1px solid #334155', borderRadius: '6px', padding: '6px', color: '#fff', fontSize: '12px', textAlign: 'center' }}
+                  />
+                  <button type="button" onClick={() => removeExercise(ex.id)} style={{ color: '#ef4444', background: 'none', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>✕</button>
                 </div>
-              )}
+              ))}
 
-              {/* Strength Fields */}
-              {workoutType !== 'Cardio' && (
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <label className="text-xs font-bold text-slate-300">Exercises Tracked</label>
-                    <button
-                      type="button"
-                      onClick={addExerciseRow}
-                      className={`text-xs hover:underline font-bold ${theme.primaryText}`}
-                    >
-                      + Add Exercise Row
-                    </button>
-                  </div>
+              <button type="button" onClick={addExerciseRow} style={{ background: 'none', border: 'none', color: primaryColor, fontWeight: 'bold', fontSize: '12px', cursor: 'pointer', alignSelf: 'flex-start' }}>+ Add Row</button>
 
-                  {exercises.map((ex) => (
-                    <div key={ex.id} className="grid grid-cols-12 gap-2 items-center bg-slate-950 p-3 rounded-xl border border-slate-800">
-                      <input
-                        type="text"
-                        placeholder="Exercise name"
-                        value={ex.name}
-                        onChange={(e) => updateExercise(ex.id, 'name', e.target.value)}
-                        className="col-span-5 bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-100"
-                      />
-                      <input
-                        type="number"
-                        placeholder="Sets"
-                        value={ex.sets || ''}
-                        onChange={(e) => updateExercise(ex.id, 'sets', parseInt(e.target.value) || 0)}
-                        className="col-span-2 bg-slate-900 border border-slate-800 rounded-lg px-2 py-1.5 text-xs text-center text-slate-100"
-                      />
-                      <input
-                        type="number"
-                        placeholder="Reps"
-                        value={ex.reps || ''}
-                        onChange={(e) => updateExercise(ex.id, 'reps', parseInt(e.target.value) || 0)}
-                        className="col-span-2 bg-slate-900 border border-slate-800 rounded-lg px-2 py-1.5 text-xs text-center text-slate-100"
-                      />
-                      <input
-                        type="number"
-                        placeholder="lbs"
-                        value={ex.weight || ''}
-                        onChange={(e) => updateExercise(ex.id, 'weight', parseFloat(e.target.value) || 0)}
-                        className="col-span-2 bg-slate-900 border border-slate-800 rounded-lg px-2 py-1.5 text-xs text-center text-slate-100"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => removeExercise(ex.id)}
-                        className="col-span-1 text-rose-400 font-bold text-center hover:text-rose-300"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-300">Notes / Reflection</label>
-                <textarea
-                  rows={2}
-                  placeholder="NordicTrack bench at 30 deg incline felt smooth..."
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-slate-100 focus:outline-none focus:border-slate-500"
-                />
-              </div>
-
-              <button
-                type="submit"
-                className={`w-full py-3.5 text-white font-black text-sm rounded-xl transition shadow-lg ${theme.primaryBg} ${theme.primaryHover}`}
-              >
-                + Save Workout Log
+              <button type="submit" style={{ background: primaryColor, color: '#fff', border: 'none', padding: '12px', borderRadius: '12px', fontWeight: 'bold', fontSize: '14px', cursor: 'pointer', marginTop: '10px' }}>
+                Save Log Entry 💾
               </button>
             </form>
           </main>
         )}
 
-        {/* WORKOUT HISTORY TAB */}
+        {/* HISTORY TAB */}
         {activeTab === 'history' && (
-          <main className={`bg-slate-900/90 backdrop-blur-md p-6 rounded-3xl border shadow-2xl space-y-4 ${theme.cardGlow}`}>
-            <h2 className={`text-xl font-black ${theme.primaryText}`}>{activeProfile}'s Workout History</h2>
+          <main style={{ background: '#1e293b', padding: '20px', borderRadius: '24px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <h2 style={{ fontSize: '18px', fontWeight: 'bold', color: primaryColor, margin: 0 }}>{activeProfile}'s Logged Sessions</h2>
             {profileLogs.length === 0 ? (
-              <p className="text-xs text-slate-500 text-center py-8">No saved workouts yet for {activeProfile}. Log a session to get started!</p>
+              <p style={{ fontSize: '12px', color: '#94a3b8' }}>No workouts saved yet.</p>
             ) : (
-              <div className="space-y-3">
-                {profileLogs.map((log) => (
-                  <div key={log.id} className="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-2 hover:border-slate-700 transition">
-                    <div className="flex justify-between items-center border-b border-slate-800 pb-2">
-                      <div>
-                        <h3 className="font-bold text-white text-sm">{log.title}</h3>
-                        <span className="text-[10px] text-slate-400">{log.date}</span>
-                      </div>
-                      <span className={`text-[10px] border px-2.5 py-1 rounded-full font-bold ${theme.badgeBg}`}>
-                        {log.type}
-                      </span>
-                    </div>
-
-                    {log.cardioDetails && (
-                      <div className="text-xs text-cyan-300 bg-cyan-950/40 p-2.5 rounded-xl border border-cyan-500/20 flex gap-4">
-                        <span>🏃 {log.cardioDetails.activity}</span>
-                        <span>📍 {log.cardioDetails.distanceMiles} miles</span>
-                        <span>⏱️ {log.cardioDetails.durationMinutes} mins</span>
-                      </div>
-                    )}
-
-                    {log.exercises.length > 0 && (
-                      <ul className="text-xs text-slate-300 space-y-1 list-disc list-inside">
-                        {log.exercises.map((e, idx) => (
-                          <li key={idx}>
-                            {e.name}: {e.sets} sets × {e.reps} reps {e.weight ? `@ ${e.weight} lbs` : ''}
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-
-                    {log.notes && <p className="text-[11px] text-slate-400 italic">"{log.notes}"</p>}
+              profileLogs.map((log) => (
+                <div key={log.id} style={{ background: '#0f172a', padding: '12px', borderRadius: '12px', border: '1px solid #334155' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                    <strong style={{ fontSize: '14px', color: '#fff' }}>{log.title}</strong>
+                    <span style={{ fontSize: '10px', color: '#94a3b8' }}>{log.date}</span>
                   </div>
-                ))}
-              </div>
+                  <ul style={{ fontSize: '12px', color: '#cbd5e1', paddingLeft: '16px', margin: 0 }}>
+                    {log.exercises.map((e, i) => (
+                      <li key={i}>{e.name}: {e.sets} sets × {e.reps} reps {e.weight ? `@ ${e.weight} lbs` : ''}</li>
+                    ))}
+                  </ul>
+                </div>
+              ))
             )}
           </main>
         )}
 
-        {/* EQUIPMENT SETTINGS TAB */}
+        {/* GEAR TAB */}
         {activeTab === 'equipment' && (
-          <main className={`bg-slate-900/90 backdrop-blur-md p-6 rounded-3xl border shadow-2xl space-y-6 ${theme.cardGlow}`}>
-            <div className="border-b border-slate-800 pb-3">
-              <h2 className="text-xl font-black text-amber-400">Available Garage Gear</h2>
-              <p className="text-xs text-slate-400">Toggle equipment on or off to automatically adapt your custom workout plans.</p>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+          <main style={{ background: '#1e293b', padding: '20px', borderRadius: '24px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <h2 style={{ fontSize: '18px', fontWeight: 'bold', color: '#f59e0b', margin: 0 }}>Garage Equipment</h2>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '10px' }}>
               {DEFAULT_EQUIPMENT.map((item) => {
                 const isSelected = equipment.includes(item.id);
                 return (
                   <button
                     key={item.id}
                     onClick={() => toggleEquipment(item.id)}
-                    className={`p-4 rounded-2xl border text-left flex items-center gap-3 transition ${
-                      isSelected
-                        ? 'bg-amber-950/60 border-amber-500 text-amber-200 shadow-md'
-                        : 'bg-slate-950 border-slate-800 text-slate-500 hover:border-slate-700'
-                    }`}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                      padding: '12px',
+                      borderRadius: '12px',
+                      border: isSelected ? '1px solid #f59e0b' : '1px solid #334155',
+                      background: isSelected ? 'rgba(245, 158, 11, 0.15)' : '#0f172a',
+                      color: isSelected ? '#fef3c7' : '#64748b',
+                      cursor: 'pointer',
+                      textAlign: 'left'
+                    }}
                   >
-                    <span className="text-2xl">{item.icon}</span>
-                    <div className="flex-1">
-                      <div className="text-xs font-bold">{item.name}</div>
-                      <div className="text-[10px] text-slate-500">{isSelected ? 'Active in Plan' : 'Not Selected'}</div>
-                    </div>
+                    <span style={{ fontSize: '20px' }}>{item.icon}</span>
+                    <span style={{ fontSize: '12px', fontWeight: 'bold' }}>{item.name}</span>
                   </button>
                 );
               })}
             </div>
           </main>
         )}
+
       </div>
     </div>
   );
