@@ -44,6 +44,22 @@ export default function App() {
   const [activeProfile, setActiveProfile] = useState<Profile>('Roxanne');
   const [activeTab, setActiveTab] = useState<'plan' | 'log' | 'history' | 'equipment'>('plan');
 
+  // Theme Styling Engine
+  const isRoxanne = activeProfile === 'Roxanne';
+  
+  const theme = {
+    gradientHeader: isRoxanne 
+      ? 'from-amber-600 via-orange-600 to-red-600' 
+      : 'from-purple-700 via-fuchsia-600 to-indigo-700',
+    primaryBg: isRoxanne ? 'bg-orange-600' : 'bg-purple-600',
+    primaryHover: isRoxanne ? 'hover:bg-orange-500' : 'hover:bg-purple-500',
+    primaryText: isRoxanne ? 'text-orange-400' : 'text-purple-400',
+    primaryBorder: isRoxanne ? 'border-orange-500/40' : 'border-purple-500/40',
+    cardGlow: isRoxanne ? 'shadow-orange-950/40 border-orange-500/20' : 'shadow-purple-950/40 border-purple-500/20',
+    activeTabClass: isRoxanne ? 'bg-orange-500 text-white shadow-orange-500/30' : 'bg-purple-600 text-white shadow-purple-600/30',
+    badgeBg: isRoxanne ? 'bg-orange-950/80 text-orange-300 border-orange-500/30' : 'bg-purple-950/80 text-purple-300 border-purple-500/30',
+  };
+
   // Local Storage State
   const [equipment, setEquipment] = useState<string[]>(() => {
     const saved = localStorage.getItem('duofit_equipment');
@@ -64,7 +80,7 @@ export default function App() {
   const [distance, setDistance] = useState('');
   const [duration, setDuration] = useState('');
   const [exercises, setExercises] = useState<ExerciseLog[]>([
-    { id: '1', name: 'Bench Press', sets: 4, reps: 8, weight: 135 },
+    { id: '1', name: 'NordicTrack Bench Press', sets: 4, reps: 8, weight: 135 },
   ]);
   const [notes, setNotes] = useState('');
 
@@ -77,14 +93,12 @@ export default function App() {
     localStorage.setItem('duofit_logs', JSON.stringify(workoutLogs));
   }, [workoutLogs]);
 
-  // Toggle Equipment Selection
   const toggleEquipment = (id: string) => {
     setEquipment((prev) =>
       prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
     );
   };
 
-  // Add Exercise Row to Form
   const addExerciseRow = () => {
     setExercises([
       ...exercises,
@@ -102,7 +116,6 @@ export default function App() {
     setExercises((prev) => prev.filter((e) => e.id !== id));
   };
 
-  // Save Workout Log
   const handleSaveWorkout = (e: React.FormEvent) => {
     e.preventDefault();
     if (!workoutTitle) return;
@@ -134,60 +147,97 @@ export default function App() {
     setDistance('');
     setDuration('');
     setNotes('');
-    alert(`Workout saved for ${activeProfile}!`);
+    alert(`🔥 Workout saved for ${activeProfile}!`);
     setActiveTab('history');
   };
 
-  // Filtered Logs
+  const startPlanSession = (title: string, type: 'Strength' | 'Cardio' | 'Conditioning' | 'Mixed') => {
+    setWorkoutTitle(title);
+    setWorkoutType(type);
+    setActiveTab('log');
+  };
+
   const profileLogs = workoutLogs.filter((log) => log.profile === activeProfile);
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans p-4 md:p-8">
+    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans p-4 md:p-8 transition-colors duration-500">
       <div className="max-w-4xl mx-auto space-y-6">
 
-        {/* Header & Profile Switcher */}
-        <header className="bg-gradient-to-r from-slate-900 via-violet-950 to-slate-900 p-6 rounded-3xl border border-violet-500/30 shadow-2xl space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        {/* Dynamic Glowing Header */}
+        <header className={`bg-gradient-to-r ${theme.gradientHeader} p-6 rounded-3xl shadow-2xl space-y-4 relative overflow-hidden`}>
+          <div className="absolute -right-10 -bottom-10 opacity-15 text-9xl select-none">
+            {isRoxanne ? '🔥' : '👑'}
+          </div>
+
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
             <div>
-              <h1 className="text-3xl font-black bg-gradient-to-r from-cyan-400 via-teal-300 to-emerald-400 bg-clip-text text-transparent">
-                DuoFit Tracker
-              </h1>
-              <p className="text-xs text-violet-300 font-medium">Garage Gym Workout & Plan Generator</p>
+              <div className="flex items-center gap-2">
+                <h1 className="text-3xl font-black text-white tracking-wider">DUOFIT TRACKER</h1>
+                <span className="text-xs bg-white/20 backdrop-blur-md px-2.5 py-0.5 rounded-full font-bold text-white">
+                  Garage Edition
+                </span>
+              </div>
+              <p className="text-xs text-white/80 font-medium mt-1">
+                {isRoxanne ? '⚡ Sunset Orange Mode (Roxanne)' : '💜 Royal Purple Mode (Diana)'}
+              </p>
             </div>
 
-            {/* Profile Selector */}
-            <div className="flex items-center bg-slate-950 p-1.5 rounded-2xl border border-violet-500/40">
-              {(['Roxanne', 'Diana'] as Profile[]).map((person) => (
-                <button
-                  key={person}
-                  onClick={() => setActiveProfile(person)}
-                  className={`px-4 py-2 rounded-xl text-xs font-black transition-all ${
-                    activeProfile === person
-                      ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg scale-105'
-                      : 'text-slate-400 hover:text-slate-200'
-                  }`}
-                >
-                  👤 {person}
-                </button>
-              ))}
+            {/* Profile Switcher */}
+            <div className="flex items-center bg-slate-950/60 backdrop-blur-md p-1.5 rounded-2xl border border-white/20">
+              <button
+                onClick={() => setActiveProfile('Roxanne')}
+                className={`px-4 py-2 rounded-xl text-xs font-black transition-all ${
+                  isRoxanne
+                    ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-lg scale-105 ring-2 ring-white/50'
+                    : 'text-slate-300 hover:text-white'
+                }`}
+              >
+                🔥 Roxanne
+              </button>
+              <button
+                onClick={() => setActiveProfile('Diana')}
+                className={`px-4 py-2 rounded-xl text-xs font-black transition-all ${
+                  !isRoxanne
+                    ? 'bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white shadow-lg scale-105 ring-2 ring-white/50'
+                    : 'text-slate-300 hover:text-white'
+                }`}
+              >
+                👑 Diana
+              </button>
             </div>
           </div>
 
-          {/* Navigation Tabs */}
-          <nav className="flex flex-wrap gap-2 border-t border-violet-900/50 pt-4 justify-center">
+          {/* User Quick Stats Bar */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-2 border-t border-white/20 text-xs">
+            <div className="bg-slate-950/40 backdrop-blur-sm p-2 rounded-xl border border-white/10 flex items-center justify-between">
+              <span className="text-white/70">Logged Sessions:</span>
+              <span className="font-black text-white text-sm">{profileLogs.length}</span>
+            </div>
+            <div className="bg-slate-950/40 backdrop-blur-sm p-2 rounded-xl border border-white/10 flex items-center justify-between">
+              <span className="text-white/70">Active Gear:</span>
+              <span className="font-black text-white text-sm">{equipment.length} Items</span>
+            </div>
+            <div className="bg-slate-950/40 backdrop-blur-sm p-2 rounded-xl border border-white/10 flex items-center justify-between col-span-2 sm:col-span-1">
+              <span className="text-white/70">Status:</span>
+              <span className="font-black text-emerald-300 text-xs"> Ready to Work</span>
+            </div>
+          </div>
+
+          {/* Navigation Bar */}
+          <nav className="flex flex-wrap gap-2 pt-2 justify-center relative z-10">
             {[
-              { id: 'plan', label: '📋 Custom Plan', color: 'bg-emerald-600' },
-              { id: 'log', label: '⚡ Log Workout', color: 'bg-cyan-600' },
-              { id: 'history', label: `📜 History (${profileLogs.length})`, color: 'bg-violet-600' },
-              { id: 'equipment', label: '⚙️ Equipment', color: 'bg-amber-600' },
+              { id: 'plan', label: '📋 Custom Plan' },
+              { id: 'log', label: '⚡ Log Workout' },
+              { id: 'history', label: `📜 History (${profileLogs.length})` },
+              { id: 'equipment', label: '⚙️ Garage Gear' },
             ].map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
                 className={`px-4 py-2 text-xs md:text-sm font-extrabold rounded-xl transition shadow-md ${
                   activeTab === tab.id
-                    ? `${tab.color} text-white ring-2 ring-white/40 scale-105`
-                    : 'bg-slate-900 text-slate-300 hover:bg-slate-800'
+                    ? `${theme.activeTabClass} ring-2 ring-white/50 scale-105`
+                    : 'bg-slate-950/60 text-slate-200 hover:bg-slate-900'
                 }`}
               >
                 {tab.label}
@@ -198,75 +248,101 @@ export default function App() {
 
         {/* CUSTOM PLAN GENERATOR TAB */}
         {activeTab === 'plan' && (
-          <main className="bg-slate-900/80 backdrop-blur-md p-6 rounded-3xl border border-emerald-500/30 shadow-xl space-y-6">
+          <main className={`bg-slate-900/90 backdrop-blur-md p-6 rounded-3xl border shadow-2xl space-y-6 ${theme.cardGlow}`}>
             <div className="border-b border-slate-800 pb-3 flex justify-between items-center">
               <div>
-                <h2 className="text-xl font-black text-emerald-400">Tailored Garage Plan for {activeProfile}</h2>
-                <p className="text-xs text-slate-400">Generated based on your {equipment.length} active equipment items.</p>
+                <h2 className={`text-xl font-black ${theme.primaryText}`}>
+                  {isRoxanne ? '🔥 Roxanne\'s Tailored Garage Routine' : '👑 Diana\'s Custom Workout Plan'}
+                </h2>
+                <p className="text-xs text-slate-400">Smart-generated based on your current {equipment.length} active garage items.</p>
               </div>
               <button
                 onClick={() => setActiveTab('equipment')}
-                className="text-xs bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg text-emerald-300 border border-emerald-500/30"
+                className={`text-xs px-3 py-1.5 rounded-xl border font-bold ${theme.badgeBg}`}
               >
-                Edit Gear
+                Edit Active Gear
               </button>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Session 1: Cardio & Endurance */}
-              <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-3">
+              {/* Session 1 */}
+              <div className="bg-slate-950 p-5 rounded-2xl border border-slate-800 space-y-3 relative hover:border-slate-700 transition">
                 <div className="flex justify-between items-center">
-                  <h3 className="font-bold text-cyan-300 text-sm">🏃 Session 1: Cardio & Endurance</h3>
-                  <span className="text-[10px] bg-cyan-950 text-cyan-400 px-2 py-0.5 rounded font-bold">Aerobic</span>
+                  <h3 className={`font-bold text-sm ${theme.primaryText}`}>🏃 Session 1: Cardio & Endurance</h3>
+                  <span className="text-[10px] bg-cyan-950 text-cyan-400 border border-cyan-500/30 px-2 py-0.5 rounded-full font-bold">Aerobic</span>
                 </div>
-                <ul className="text-xs text-slate-300 space-y-1 list-disc list-inside">
+                <ul className="text-xs text-slate-300 space-y-1.5 list-disc list-inside">
                   {equipment.includes('rower') && <li>Concept2 Rower: 500m Interval Sprints (5 sets)</li>}
                   {equipment.includes('airbike') && <li>Assault AirBike: 20/10 Calorie Intervals (15 mins)</li>}
                   {equipment.includes('plyo_boxes') && <li>Jump Rope Warm-up (3x2 mins)</li>}
-                  <li>Outdoor Endurance Walk / Run Tempo Session</li>
+                  <li>Outdoor Long-Distance Run / Endurance Tempo Walk</li>
                 </ul>
+                <button
+                  onClick={() => startPlanSession('Cardio & Endurance Interval', 'Cardio')}
+                  className={`w-full mt-2 py-2 text-xs font-black text-white rounded-xl transition ${theme.primaryBg} ${theme.primaryHover}`}
+                >
+                  Start This Session 🚀
+                </button>
               </div>
 
-              {/* Session 2: Rack & Bench Upper/Lower */}
-              <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-3">
+              {/* Session 2 */}
+              <div className="bg-slate-950 p-5 rounded-2xl border border-slate-800 space-y-3 relative hover:border-slate-700 transition">
                 <div className="flex justify-between items-center">
-                  <h3 className="font-bold text-emerald-300 text-sm">🏋️ Session 2: Rack & Bench Strength</h3>
-                  <span className="text-[10px] bg-emerald-950 text-emerald-400 px-2 py-0.5 rounded font-bold">Strength</span>
+                  <h3 className={`font-bold text-sm ${theme.primaryText}`}>🏋️ Session 2: Rack & Bench Heavy Strength</h3>
+                  <span className="text-[10px] bg-emerald-950 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full font-bold">Strength</span>
                 </div>
-                <ul className="text-xs text-slate-300 space-y-1 list-disc list-inside">
-                  {equipment.includes('bench') && equipment.includes('barbell') && <li>Barbell Incline / Flat Bench Press (4x8)</li>}
-                  {equipment.includes('bench') && equipment.includes('dumbbells') && <li>Incline Dumbbell Chest Flyes & Rows (3x10)</li>}
-                  {equipment.includes('barbell') && <li>Barbell Back Squats or Deadlifts (4x8)</li>}
+                <ul className="text-xs text-slate-300 space-y-1.5 list-disc list-inside">
+                  {equipment.includes('bench') && equipment.includes('barbell') && <li>NordicTrack Bench Press (Flat / Incline 4x8)</li>}
+                  {equipment.includes('bench') && equipment.includes('dumbbells') && <li>Incline Dumbbell Chest Flyes & DB Rows (3x10)</li>}
+                  {equipment.includes('barbell') && <li>Titan Rack Barbell Squats or Deadlifts (4x8)</li>}
                   {equipment.includes('rack') && <li>Landmine Rotations & Presses (3x10)</li>}
                   {equipment.includes('cables') && <li>Cable Triceps Pushdowns & Lat Pulldowns (3x12)</li>}
                 </ul>
+                <button
+                  onClick={() => startPlanSession('Rack & Bench Power Session', 'Strength')}
+                  className={`w-full mt-2 py-2 text-xs font-black text-white rounded-xl transition ${theme.primaryBg} ${theme.primaryHover}`}
+                >
+                  Start This Session 🚀
+                </button>
               </div>
 
-              {/* Session 3: Conditioning & Core */}
-              <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-3">
+              {/* Session 3 */}
+              <div className="bg-slate-950 p-5 rounded-2xl border border-slate-800 space-y-3 relative hover:border-slate-700 transition">
                 <div className="flex justify-between items-center">
-                  <h3 className="font-bold text-violet-300 text-sm">💥 Session 3: Full Body Conditioning</h3>
-                  <span className="text-[10px] bg-violet-950 text-violet-400 px-2 py-0.5 rounded font-bold">Conditioning</span>
+                  <h3 className={`font-bold text-sm ${theme.primaryText}`}>💥 Session 3: Full Body Conditioning</h3>
+                  <span className="text-[10px] bg-violet-950 text-violet-400 border border-violet-500/30 px-2 py-0.5 rounded-full font-bold">Conditioning</span>
                 </div>
-                <ul className="text-xs text-slate-300 space-y-1 list-disc list-inside">
+                <ul className="text-xs text-slate-300 space-y-1.5 list-disc list-inside">
                   {equipment.includes('med_slam_balls') && <li>Medicine Ball Wall Balls or Russian Twists (4x15)</li>}
-                  {equipment.includes('kettlebell') && <li>Kettlebell Swings (4x15)</li>}
-                  {equipment.includes('plyo_boxes') && <li>Box Step-ups or Jump Squats (3x12)</li>}
-                  {equipment.includes('bench') && <li>Bench Dips or Step-overs (3x12)</li>}
+                  {equipment.includes('kettlebell') && <li>Heavy Kettlebell Swings (4x15)</li>}
+                  {equipment.includes('plyo_boxes') && <li>Plyo Box Step-ups or Jump Squats (3x12)</li>}
+                  {equipment.includes('bench') && <li>NordicTrack Bench Dips (3x15)</li>}
                 </ul>
+                <button
+                  onClick={() => startPlanSession('Full Body Conditioning Circuit', 'Conditioning')}
+                  className={`w-full mt-2 py-2 text-xs font-black text-white rounded-xl transition ${theme.primaryBg} ${theme.primaryHover}`}
+                >
+                  Start This Session 🚀
+                </button>
               </div>
 
-              {/* Session 4: Active Recovery */}
-              <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-3">
+              {/* Session 4 */}
+              <div className="bg-slate-950 p-5 rounded-2xl border border-slate-800 space-y-3 relative hover:border-slate-700 transition">
                 <div className="flex justify-between items-center">
-                  <h3 className="font-bold text-amber-300 text-sm">🧘 Session 4: Active Recovery</h3>
-                  <span className="text-[10px] bg-amber-950 text-amber-400 px-2 py-0.5 rounded font-bold">Mobility</span>
+                  <h3 className={`font-bold text-sm ${theme.primaryText}`}>🧘 Session 4: Active Recovery & Mobility</h3>
+                  <span className="text-[10px] bg-amber-950 text-amber-400 border border-amber-500/30 px-2 py-0.5 rounded-full font-bold">Mobility</span>
                 </div>
-                <p className="text-xs text-slate-300">
+                <p className="text-xs text-slate-300 leading-relaxed">
                   {equipment.includes('recovery_mat')
-                    ? '20-30 min Foam Rolling, Yoga Wheel mobility flow, and AbMat core work.'
-                    : '20 min Light Recovery Walk and Dynamic Stretches.'}
+                    ? '20-30 min Foam Rolling, Yoga Wheel spine decompression, dynamic mobility flow, and AbMat core work.'
+                    : '20 min Light Recovery Walk and Dynamic Mobility Stretches.'}
                 </p>
+                <button
+                  onClick={() => startPlanSession('Active Recovery & Foam Rolling', 'Mixed')}
+                  className={`w-full mt-2 py-2 text-xs font-black text-white rounded-xl transition ${theme.primaryBg} ${theme.primaryHover}`}
+                >
+                  Start This Session 🚀
+                </button>
               </div>
             </div>
           </main>
@@ -274,17 +350,17 @@ export default function App() {
 
         {/* LOG WORKOUT TAB */}
         {activeTab === 'log' && (
-          <main className="bg-slate-900/80 backdrop-blur-md p-6 rounded-3xl border border-cyan-500/30 shadow-xl space-y-6">
+          <main className={`bg-slate-900/90 backdrop-blur-md p-6 rounded-3xl border shadow-2xl space-y-6 ${theme.cardGlow}`}>
             <div className="border-b border-slate-800 pb-3 flex justify-between items-center">
-              <h2 className="text-xl font-black text-cyan-400">Log Workout for {activeProfile}</h2>
+              <h2 className={`text-xl font-black ${theme.primaryText}`}>Log Workout for {activeProfile}</h2>
               <div className="flex gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800">
                 {(['Strength', 'Cardio', 'Conditioning', 'Mixed'] as const).map((t) => (
                   <button
                     key={t}
                     type="button"
                     onClick={() => setWorkoutType(t)}
-                    className={`px-2.5 py-1 text-xs font-bold rounded-lg ${
-                      workoutType === t ? 'bg-cyan-600 text-white' : 'text-slate-400'
+                    className={`px-3 py-1 text-xs font-bold rounded-lg transition ${
+                      workoutType === t ? `${theme.primaryBg} text-white` : 'text-slate-400 hover:text-slate-200'
                     }`}
                   >
                     {t}
@@ -298,11 +374,11 @@ export default function App() {
                 <label className="text-xs font-bold text-slate-300">Workout Name / Title</label>
                 <input
                   type="text"
-                  placeholder="e.g., Garage Bench Press & Rows, Rower Sprints..."
+                  placeholder="e.g., Garage Bench Press & Rows, Concept2 Rower Sprints..."
                   value={workoutTitle}
                   onChange={(e) => setWorkoutTitle(e.target.value)}
                   required
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-slate-100 focus:outline-none focus:border-cyan-400"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-slate-100 focus:outline-none focus:border-slate-500"
                 />
               </div>
 
@@ -350,9 +426,9 @@ export default function App() {
                     <button
                       type="button"
                       onClick={addExerciseRow}
-                      className="text-xs text-cyan-400 hover:underline font-bold"
+                      className={`text-xs hover:underline font-bold ${theme.primaryText}`}
                     >
-                      + Add Exercise
+                      + Add Exercise Row
                     </button>
                   </div>
 
@@ -363,33 +439,33 @@ export default function App() {
                         placeholder="Exercise name"
                         value={ex.name}
                         onChange={(e) => updateExercise(ex.id, 'name', e.target.value)}
-                        className="col-span-5 bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs"
+                        className="col-span-5 bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-100"
                       />
                       <input
                         type="number"
                         placeholder="Sets"
                         value={ex.sets || ''}
                         onChange={(e) => updateExercise(ex.id, 'sets', parseInt(e.target.value) || 0)}
-                        className="col-span-2 bg-slate-900 border border-slate-800 rounded-lg px-2 py-1.5 text-xs text-center"
+                        className="col-span-2 bg-slate-900 border border-slate-800 rounded-lg px-2 py-1.5 text-xs text-center text-slate-100"
                       />
                       <input
                         type="number"
                         placeholder="Reps"
                         value={ex.reps || ''}
                         onChange={(e) => updateExercise(ex.id, 'reps', parseInt(e.target.value) || 0)}
-                        className="col-span-2 bg-slate-900 border border-slate-800 rounded-lg px-2 py-1.5 text-xs text-center"
+                        className="col-span-2 bg-slate-900 border border-slate-800 rounded-lg px-2 py-1.5 text-xs text-center text-slate-100"
                       />
                       <input
                         type="number"
                         placeholder="lbs"
                         value={ex.weight || ''}
                         onChange={(e) => updateExercise(ex.id, 'weight', parseFloat(e.target.value) || 0)}
-                        className="col-span-2 bg-slate-900 border border-slate-800 rounded-lg px-2 py-1.5 text-xs text-center"
+                        className="col-span-2 bg-slate-900 border border-slate-800 rounded-lg px-2 py-1.5 text-xs text-center text-slate-100"
                       />
                       <button
                         type="button"
                         onClick={() => removeExercise(ex.id)}
-                        className="col-span-1 text-rose-400 font-bold text-center"
+                        className="col-span-1 text-rose-400 font-bold text-center hover:text-rose-300"
                       >
                         ✕
                       </button>
@@ -402,16 +478,16 @@ export default function App() {
                 <label className="text-xs font-bold text-slate-300">Notes / Reflection</label>
                 <textarea
                   rows={2}
-                  placeholder="NordicTrack bench at 30 deg incline felt strong..."
+                  placeholder="NordicTrack bench at 30 deg incline felt smooth..."
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-slate-100 focus:outline-none focus:border-cyan-400"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-slate-100 focus:outline-none focus:border-slate-500"
                 />
               </div>
 
               <button
                 type="submit"
-                className="w-full py-3 bg-cyan-600 hover:bg-cyan-500 font-extrabold text-white text-sm rounded-xl transition shadow-lg"
+                className={`w-full py-3.5 text-white font-black text-sm rounded-xl transition shadow-lg ${theme.primaryBg} ${theme.primaryHover}`}
               >
                 + Save Workout Log
               </button>
@@ -421,20 +497,20 @@ export default function App() {
 
         {/* WORKOUT HISTORY TAB */}
         {activeTab === 'history' && (
-          <main className="bg-slate-900/80 backdrop-blur-md p-6 rounded-3xl border border-violet-500/30 shadow-xl space-y-4">
-            <h2 className="text-xl font-black text-violet-400">{activeProfile}'s Workout History</h2>
+          <main className={`bg-slate-900/90 backdrop-blur-md p-6 rounded-3xl border shadow-2xl space-y-4 ${theme.cardGlow}`}>
+            <h2 className={`text-xl font-black ${theme.primaryText}`}>{activeProfile}'s Workout History</h2>
             {profileLogs.length === 0 ? (
               <p className="text-xs text-slate-500 text-center py-8">No saved workouts yet for {activeProfile}. Log a session to get started!</p>
             ) : (
               <div className="space-y-3">
                 {profileLogs.map((log) => (
-                  <div key={log.id} className="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-2">
+                  <div key={log.id} className="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-2 hover:border-slate-700 transition">
                     <div className="flex justify-between items-center border-b border-slate-800 pb-2">
                       <div>
-                        <h3 className="font-bold text-violet-300 text-sm">{log.title}</h3>
+                        <h3 className="font-bold text-white text-sm">{log.title}</h3>
                         <span className="text-[10px] text-slate-400">{log.date}</span>
                       </div>
-                      <span className="text-[10px] bg-violet-950 text-violet-400 px-2.5 py-1 rounded-md border border-violet-500/30 font-bold">
+                      <span className={`text-[10px] border px-2.5 py-1 rounded-full font-bold ${theme.badgeBg}`}>
                         {log.type}
                       </span>
                     </div>
@@ -457,7 +533,7 @@ export default function App() {
                       </ul>
                     )}
 
-                    {log.notes && <p className="text-[11px] text-slate-400 italic">{log.notes}</p>}
+                    {log.notes && <p className="text-[11px] text-slate-400 italic">"{log.notes}"</p>}
                   </div>
                 ))}
               </div>
@@ -467,7 +543,7 @@ export default function App() {
 
         {/* EQUIPMENT SETTINGS TAB */}
         {activeTab === 'equipment' && (
-          <main className="bg-slate-900/80 backdrop-blur-md p-6 rounded-3xl border border-amber-500/30 shadow-xl space-y-6">
+          <main className={`bg-slate-900/90 backdrop-blur-md p-6 rounded-3xl border shadow-2xl space-y-6 ${theme.cardGlow}`}>
             <div className="border-b border-slate-800 pb-3">
               <h2 className="text-xl font-black text-amber-400">Available Garage Gear</h2>
               <p className="text-xs text-slate-400">Toggle equipment on or off to automatically adapt your custom workout plans.</p>
@@ -482,14 +558,14 @@ export default function App() {
                     onClick={() => toggleEquipment(item.id)}
                     className={`p-4 rounded-2xl border text-left flex items-center gap-3 transition ${
                       isSelected
-                        ? 'bg-amber-950/60 border-amber-500 text-amber-200'
-                        : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700'
+                        ? 'bg-amber-950/60 border-amber-500 text-amber-200 shadow-md'
+                        : 'bg-slate-950 border-slate-800 text-slate-500 hover:border-slate-700'
                     }`}
                   >
                     <span className="text-2xl">{item.icon}</span>
                     <div className="flex-1">
                       <div className="text-xs font-bold">{item.name}</div>
-                      <div className="text-[10px] text-slate-500">{isSelected ? 'Active' : 'Not Selected'}</div>
+                      <div className="text-[10px] text-slate-500">{isSelected ? 'Active in Plan' : 'Not Selected'}</div>
                     </div>
                   </button>
                 );
