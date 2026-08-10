@@ -25,6 +25,16 @@ interface WorkoutLog {
   notes?: string;
 }
 
+interface BodyMetricLog {
+  id: string;
+  profile: Profile;
+  date: string;
+  weightLbs: number;
+  heightInches: number;
+  bmi: number;
+  notes?: string;
+}
+
 const DEFAULT_EQUIPMENT = [
   { id: 'rack', name: 'Titan Power Rack (Landmine & Pulley)', icon: '🏗️' },
   { id: 'bench', name: 'NordicTrack Adjustable Bench', icon: '🏋️‍♂️' },
@@ -41,11 +51,11 @@ const DEFAULT_EQUIPMENT = [
 
 export default function App() {
   const [activeProfile, setActiveProfile] = useState<Profile>('Roxanne');
-  const [activeTab, setActiveTab] = useState<'plan' | 'log' | 'history' | 'equipment'>('plan');
+  const [activeTab, setActiveTab] = useState<'plan' | 'log' | 'metrics' | 'history' | 'equipment'>('plan');
 
   const isRoxanne = activeProfile === 'Roxanne';
 
-  // Dynamic Styles
+  // Dynamic Visual Styles
   const primaryColor = isRoxanne ? '#ea580c' : '#8b5cf6';
   const primaryGradient = isRoxanne 
     ? 'linear-gradient(135deg, #d97706, #ea580c, #dc2626)' 
@@ -53,6 +63,7 @@ export default function App() {
   const badgeBg = isRoxanne ? 'rgba(234, 88, 12, 0.2)' : 'rgba(139, 92, 246, 0.2)';
   const badgeBorder = isRoxanne ? '#ea580c' : '#8b5cf6';
 
+  // Equipment & Workout State
   const [equipment, setEquipment] = useState<string[]>(() => {
     const saved = localStorage.getItem('duofit_equipment');
     return saved
@@ -65,6 +76,18 @@ export default function App() {
     return saved ? JSON.parse(saved) : [];
   });
 
+  // Body Metrics State
+  const [metricLogs, setMetricLogs] = useState<BodyMetricLog[]>(() => {
+    const saved = localStorage.getItem('duofit_metrics');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  const [weightInput, setWeightInput] = useState('');
+  const [heightFeet, setHeightFeet] = useState('5');
+  const [heightInches, setHeightInches] = useState('6');
+  const [metricNotes, setMetricNotes] = useState('');
+
+  // Workout Log Form State
   const [workoutType, setWorkoutType] = useState<'Strength' | 'Cardio' | 'Conditioning' | 'Mixed'>('Strength');
   const [workoutTitle, setWorkoutTitle] = useState('');
   const [cardioActivity, setCardioActivity] = useState('Concept2 Rower / Outdoor Run');
@@ -75,6 +98,7 @@ export default function App() {
   ]);
   const [notes, setNotes] = useState('');
 
+  // Local Storage Sync
   useEffect(() => {
     localStorage.setItem('duofit_equipment', JSON.stringify(equipment));
   }, [equipment]);
@@ -82,6 +106,17 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('duofit_logs', JSON.stringify(workoutLogs));
   }, [workoutLogs]);
+
+  useEffect(() => {
+    localStorage.setItem('duofit_metrics', JSON.stringify(metricLogs));
+  }, [metricLogs]);
+
+  // BMI Calculation Formula: (Weight in lbs / (Height in inches)^2) * 703
+  const calculatedInches = (parseInt(heightFeet) || 0) * 12 + (parseInt(heightInches) || 0);
+  const numericWeight = parseFloat(weightInput) || 0;
+  const liveBmi = (numericWeight > 0 && calculatedInches > 0)
+    ? ((numericWeight / (calculatedInches * calculatedInches)) * 703).toFixed(1)
+    : '0.0';
 
   const toggleEquipment = (id: string) => {
     setEquipment((prev) =>
@@ -141,6 +176,30 @@ export default function App() {
     setActiveTab('history');
   };
 
+  const handleSaveMetric = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!numericWeight || calculatedInches <= 0) return;
+
+    const newMetric: BodyMetricLog = {
+      id: `metric-${Date.now()}`,
+      profile: activeProfile,
+      date: new Date().toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      }),
+      weightLbs: numericWeight,
+      heightInches: calculatedInches,
+      bmi: parseFloat(liveBmi),
+      notes: metricNotes,
+    };
+
+    setMetricLogs([newMetric, ...metricLogs]);
+    setWeightInput('');
+    setMetricNotes('');
+    alert(`📊 Body metrics logged for ${activeProfile}!`);
+  };
+
   const startPlanSession = (title: string, type: 'Strength' | 'Cardio' | 'Conditioning' | 'Mixed') => {
     setWorkoutTitle(title);
     setWorkoutType(type);
@@ -148,12 +207,20 @@ export default function App() {
   };
 
   const profileLogs = workoutLogs.filter((log) => log.profile === activeProfile);
+  const profileMetrics = metricLogs.filter((m) => m.profile === activeProfile);
+
+  // Weight Change Calculation
+  const latestMetric = profileMetrics[0];
+  const baselineMetric = profileMetrics[profileMetrics.length - 1];
+  const weightDifference = (latestMetric && baselineMetric && profileMetrics.length > 1)
+    ? (latestMetric.weightLbs - baselineMetric.weightLbs).toFixed(1)
+    : null;
 
   return (
     <div style={{ backgroundColor: '#090d16', minHeight: '100vh', color: '#f1f5f9', fontFamily: 'sans-serif', padding: '16px' }}>
       <div style={{ maxWidth: '800px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '20px' }}>
 
-        {/* Dynamic Gradient Header */}
+        {/* Dynamic Header */}
         <header style={{
           background: primaryGradient,
           padding: '24px',
@@ -211,23 +278,28 @@ export default function App() {
             </div>
           </div>
 
-          {/* Quick Stats Bar */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '8px' }}>
+          {/* Stats Bar */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '8px' }}>
             <div style={{ background: 'rgba(15, 23, 42, 0.5)', padding: '8px 12px', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
-              <span style={{ color: 'rgba(255,255,255,0.7)' }}>Sessions:</span>
+              <span style={{ color: 'rgba(255,255,255,0.7)' }}>Workouts:</span>
               <strong style={{ color: '#fff' }}>{profileLogs.length}</strong>
             </div>
             <div style={{ background: 'rgba(15, 23, 42, 0.5)', padding: '8px 12px', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
-              <span style={{ color: 'rgba(255,255,255,0.7)' }}>Active Gear:</span>
-              <strong style={{ color: '#fff' }}>{equipment.length} Items</strong>
+              <span style={{ color: 'rgba(255,255,255,0.7)' }}>Latest Weight:</span>
+              <strong style={{ color: '#fff' }}>{latestMetric ? `${latestMetric.weightLbs} lbs` : '--'}</strong>
+            </div>
+            <div style={{ background: 'rgba(15, 23, 42, 0.5)', padding: '8px 12px', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
+              <span style={{ color: 'rgba(255,255,255,0.7)' }}>Current BMI:</span>
+              <strong style={{ color: '#fff' }}>{latestMetric ? latestMetric.bmi : '--'}</strong>
             </div>
           </div>
 
-          {/* Nav Tabs */}
+          {/* Navigation Bar */}
           <nav style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'center' }}>
             {[
               { id: 'plan', label: '📋 Custom Plan' },
               { id: 'log', label: '⚡ Log Workout' },
+              { id: 'metrics', label: '⚖️ Weight & BMI' },
               { id: 'history', label: `📜 History (${profileLogs.length})` },
               { id: 'equipment', label: '⚙️ Garage Gear' },
             ].map((tab) => (
@@ -250,6 +322,121 @@ export default function App() {
             ))}
           </nav>
         </header>
+
+        {/* BODY METRICS & BMI TRACKER TAB */}
+        {activeTab === 'metrics' && (
+          <main style={{ background: '#1e293b', padding: '20px', borderRadius: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div style={{ borderBottom: '1px solid #334155', paddingBottom: '12px' }}>
+              <h2 style={{ fontSize: '18px', fontWeight: 'bold', color: primaryColor, margin: 0 }}>
+                ⚖️ Weight, BMI & Progress Tracker ({activeProfile})
+              </h2>
+              <p style={{ fontSize: '12px', color: '#94a3b8', margin: '4px 0 0 0' }}>Log entries over time to automatically calculate BMI and total weight loss.</p>
+            </div>
+
+            {/* Quick Metrics Summary Cards */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '10px' }}>
+              <div style={{ background: '#0f172a', padding: '12px', borderRadius: '12px', border: '1px solid #334155' }}>
+                <span style={{ fontSize: '11px', color: '#94a3b8' }}>Current Weight</span>
+                <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#fff', marginTop: '4px' }}>
+                  {latestMetric ? `${latestMetric.weightLbs} lbs` : 'No logs yet'}
+                </div>
+              </div>
+              <div style={{ background: '#0f172a', padding: '12px', borderRadius: '12px', border: '1px solid #334155' }}>
+                <span style={{ fontSize: '11px', color: '#94a3b8' }}>Auto-Calculated BMI</span>
+                <div style={{ fontSize: '20px', fontWeight: 'bold', color: primaryColor, marginTop: '4px' }}>
+                  {latestMetric ? latestMetric.bmi : 'No logs yet'}
+                </div>
+              </div>
+              <div style={{ background: '#0f172a', padding: '12px', borderRadius: '12px', border: '1px solid #334155' }}>
+                <span style={{ fontSize: '11px', color: '#94a3b8' }}>Total Change</span>
+                <div style={{ fontSize: '20px', fontWeight: 'bold', color: weightDifference && parseFloat(weightDifference) <= 0 ? '#10b981' : '#ef4444', marginTop: '4px' }}>
+                  {weightDifference ? `${weightDifference} lbs` : 'Log 2+ entries'}
+                </div>
+              </div>
+            </div>
+
+            {/* Metric Input Form */}
+            <form onSubmit={handleSaveMetric} style={{ display: 'flex', flexDirection: 'column', gap: '12px', background: '#0f172a', padding: '16px', borderRadius: '16px', border: '1px solid #334155' }}>
+              <h3 style={{ fontSize: '14px', fontWeight: 'bold', color: '#fff', margin: 0 }}>+ Log New Weight Entry</h3>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '10px' }}>
+                <div>
+                  <label style={{ fontSize: '11px', color: '#cbd5e1', display: 'block', marginBottom: '4px' }}>Weight (lbs)</label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    placeholder="e.g., 165.4"
+                    value={weightInput}
+                    onChange={(e) => setWeightInput(e.target.value)}
+                    required
+                    style={{ width: '100%', background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', padding: '8px', color: '#fff', fontSize: '12px', boxSizing: 'border-box' }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '11px', color: '#cbd5e1', display: 'block', marginBottom: '4px' }}>Height (Feet & Inches)</label>
+                  <div style={{ display: 'flex', gap: '4px' }}>
+                    <input
+                      type="number"
+                      placeholder="Ft"
+                      value={heightFeet}
+                      onChange={(e) => setHeightFeet(e.target.value)}
+                      style={{ width: '50%', background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', padding: '8px', color: '#fff', fontSize: '12px', textAlign: 'center' }}
+                    />
+                    <input
+                      type="number"
+                      placeholder="In"
+                      value={heightInches}
+                      onChange={(e) => setHeightInches(e.target.value)}
+                      style={{ width: '50%', background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', padding: '8px', color: '#fff', fontSize: '12px', textAlign: 'center' }}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '11px', color: '#cbd5e1', display: 'block', marginBottom: '4px' }}>Auto-Calculated BMI</label>
+                  <div style={{ background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', padding: '8px', color: primaryColor, fontWeight: 'bold', fontSize: '12px', textAlign: 'center' }}>
+                    {liveBmi}
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label style={{ fontSize: '11px', color: '#cbd5e1', display: 'block', marginBottom: '4px' }}>Notes (Optional)</label>
+                <input
+                  type="text"
+                  placeholder="e.g., Morning weight after outdoor long run..."
+                  value={metricNotes}
+                  onChange={(e) => setMetricNotes(e.target.value)}
+                  style={{ width: '100%', background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', padding: '8px', color: '#fff', fontSize: '12px', boxSizing: 'border-box' }}
+                />
+              </div>
+
+              <button type="submit" style={{ background: primaryColor, color: '#fff', border: 'none', padding: '10px', borderRadius: '10px', fontWeight: 'bold', fontSize: '12px', cursor: 'pointer', marginTop: '4px' }}>
+                Save Body Metrics 📊
+              </button>
+            </form>
+
+            {/* Metric History List */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <h3 style={{ fontSize: '14px', fontWeight: 'bold', color: '#fff', margin: 0 }}>{activeProfile}'s Weight History</h3>
+              {profileMetrics.length === 0 ? (
+                <p style={{ fontSize: '12px', color: '#94a3b8' }}>No metrics recorded yet. Log your first weight entry above!</p>
+              ) : (
+                profileMetrics.map((m) => (
+                  <div key={m.id} style={{ background: '#0f172a', padding: '12px', borderRadius: '12px', border: '1px solid #334155', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <strong style={{ fontSize: '14px', color: '#fff' }}>{m.weightLbs} lbs</strong>
+                      <span style={{ fontSize: '11px', color: primaryColor, marginLeft: '10px' }}>BMI: {m.bmi}</span>
+                      {m.notes && <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '2px' }}>"{m.notes}"</div>}
+                    </div>
+                    <span style={{ fontSize: '10px', color: '#94a3b8' }}>{m.date}</span>
+                  </div>
+                ))
+              )}
+            </div>
+          </main>
+        )}
 
         {/* CUSTOM PLAN TAB */}
         {activeTab === 'plan' && (
