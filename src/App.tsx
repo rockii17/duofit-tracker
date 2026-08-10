@@ -224,7 +224,7 @@ export default function App() {
           </div>
 
           {/* Nav Tabs */}
-          <nav style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyWait: 'center' }}>
+          <nav style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'center' }}>
             {[
               { id: 'plan', label: '📋 Custom Plan' },
               { id: 'log', label: '⚡ Log Workout' },
@@ -264,7 +264,6 @@ export default function App() {
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '12px' }}>
-              {/* Session Cards */}
               {[
                 {
                   title: '🏃 Session 1: Cardio & Endurance',
@@ -337,6 +336,43 @@ export default function App() {
                 />
               </div>
 
+              {/* Cardio Fields */}
+              {workoutType !== 'Strength' && (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '8px', background: '#0f172a', padding: '12px', borderRadius: '10px' }}>
+                  <div>
+                    <label style={{ fontSize: '11px', color: '#cbd5e1', display: 'block' }}>Activity</label>
+                    <input
+                      type="text"
+                      value={cardioActivity}
+                      onChange={(e) => setCardioActivity(e.target.value)}
+                      style={{ width: '100%', background: '#1e293b', border: '1px solid #334155', borderRadius: '6px', padding: '6px', color: '#fff', fontSize: '12px', boxSizing: 'border-box' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '11px', color: '#cbd5e1', display: 'block' }}>Distance (Miles)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      placeholder="3.5"
+                      value={distance}
+                      onChange={(e) => setDistance(e.target.value)}
+                      style={{ width: '100%', background: '#1e293b', border: '1px solid #334155', borderRadius: '6px', padding: '6px', color: '#fff', fontSize: '12px', boxSizing: 'border-box' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '11px', color: '#cbd5e1', display: 'block' }}>Duration (Mins)</label>
+                    <input
+                      type="number"
+                      placeholder="45"
+                      value={duration}
+                      onChange={(e) => setDuration(e.target.value)}
+                      style={{ width: '100%', background: '#1e293b', border: '1px solid #334155', borderRadius: '6px', padding: '6px', color: '#fff', fontSize: '12px', boxSizing: 'border-box' }}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Exercises */}
               {exercises.map((ex) => (
                 <div key={ex.id} style={{ display: 'flex', gap: '8px', alignItems: 'center', background: '#0f172a', padding: '8px', borderRadius: '10px' }}>
                   <input
@@ -372,6 +408,17 @@ export default function App() {
               ))}
 
               <button type="button" onClick={addExerciseRow} style={{ background: 'none', border: 'none', color: primaryColor, fontWeight: 'bold', fontSize: '12px', cursor: 'pointer', alignSelf: 'flex-start' }}>+ Add Row</button>
+
+              <div>
+                <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#cbd5e1', display: 'block', marginBottom: '4px' }}>Notes</label>
+                <textarea
+                  rows={2}
+                  placeholder="Notes on bench angle, tempo, or feel..."
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  style={{ width: '100%', background: '#0f172a', border: '1px solid #334155', borderRadius: '10px', padding: '8px', color: '#fff', boxSizing: 'border-box' }}
+                />
+              </div>
 
               <button type="submit" style={{ background: primaryColor, color: '#fff', border: 'none', padding: '12px', borderRadius: '12px', fontWeight: 'bold', fontSize: '14px', cursor: 'pointer', marginTop: '10px' }}>
                 Save Log Entry 💾
