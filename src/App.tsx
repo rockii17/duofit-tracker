@@ -1,764 +1,697 @@
 import React, { useState, useEffect } from 'react';
 
-type Profile = 'Roxanne' | 'Diana';
+type UserProfile = 'Roxanne' | 'Diana';
 type LocationMode = 'garage' | 'planet_fitness';
+type MuscleTarget = 'legs' | 'back' | 'chest' | 'shoulders' | 'arms' | 'core' | 'cardio';
+type WorkoutFormat = 'standard' | 'emom' | 'amrap' | 'pyramid';
+type FilterMode = 'muscle' | 'equipment';
 
-interface ExerciseLog {
-  id: string;
+interface GeneratedExercise {
   name: string;
-  sets?: number;
-  reps?: number;
-  weight?: number;
+  equipment: string;
+  prescription: string;
+  muscleGroup: MuscleTarget;
 }
 
-interface WorkoutLog {
+interface StrengthSet {
   id: string;
-  profile: Profile;
-  location: LocationMode;
-  date: string;
-  type: 'Strength' | 'Cardio' | 'Conditioning' | 'Mixed';
-  title: string;
-  exercises: ExerciseLog[];
-  cardioDetails?: {
-    activity: string;
-    distanceMiles: number;
-    durationMinutes: number;
-  };
-  notes?: string;
-}
-
-interface BodyMetricLog {
-  id: string;
-  profile: Profile;
-  date: string;
+  exerciseName: string;
   weightLbs: number;
-  heightInches: number;
-  bmi: number;
-  notes?: string;
+  reps: number;
+  seatSetting?: string;
 }
 
-interface MorningWalkLog {
+interface StrengthLog {
   id: string;
-  profile: Profile;
   date: string;
+  profile: UserProfile;
+  location: LocationMode;
+  routineName: string;
+  sets: StrengthSet[];
+}
+
+interface CardioLog {
+  id: string;
+  date: string;
+  profile: UserProfile;
+  type: 'Run' | 'Walk' | 'Rower' | 'AirBike' | 'Elliptical' | 'StairMaster';
   distanceMiles: number;
   durationMinutes: number;
-  notes?: string;
+  notes: string;
 }
 
-const GARAGE_EQUIPMENT = [
-  { id: 'rack', name: 'Titan Power Rack (Landmine & Pulley)', icon: '🏗️' },
-  { id: 'bench', name: 'NordicTrack Adjustable Bench', icon: '🏋️‍♂️' },
-  { id: 'barbell', name: 'Olympic Barbells & Bumper Plates', icon: '🏋️' },
-  { id: 'dumbbells', name: 'Hex Dumbbells (Up to 50 lbs)', icon: '💪' },
-  { id: 'kettlebell', name: 'Kettlebells (Up to 71 lbs)', icon: '🔔' },
-  { id: 'rower', name: 'Concept2 Rower', icon: '🚣' },
-  { id: 'airbike', name: 'Assault AirBike', icon: '🚴' },
-  { id: 'cables', name: 'Cable Attachments & Handles', icon: '⚙️' },
-  { id: 'med_slam_balls', name: 'Medicine Balls & Slam Balls', icon: '⚽' },
-  { id: 'plyo_boxes', name: 'Plyo Boxes & Jump Ropes', icon: '📦' },
-  { id: 'recovery_mat', name: 'AbMats, Yoga Wheels & Foam Rollers', icon: '🧘' },
+interface BodyMetrics {
+  id: string;
+  date: string;
+  profile: UserProfile;
+  weightLbs: number;
+  heightInches: number;
+}
+
+const PROFILE_STYLES = {
+  Roxanne: { primary: '#f97316', accent: '#fb923c', bgBadge: 'rgba(249, 115, 22, 0.15)', border: '#ea580c' },
+  Diana: { primary: '#d946ef', accent: '#f0abfc', bgBadge: 'rgba(217, 70, 239, 0.15)', border: '#c026d3' },
+};
+
+const GARAGE_POOL = [
+  // Legs
+  { name: 'Barbell Back Squat', equipment: 'Titan Power Rack & Bumper Plates', muscleGroup: 'legs' as MuscleTarget },
+  { name: 'Goblet Squat', equipment: 'Hex Dumbbells / Kettlebell', muscleGroup: 'legs' as MuscleTarget },
+  { name: 'Landmine Hack Squat', equipment: 'Titan Power Rack (Landmine)', muscleGroup: 'legs' as MuscleTarget },
+  { name: 'Box Jumps / Step-Ups', equipment: '3-in-1 Soft Plyo Box', muscleGroup: 'legs' as MuscleTarget },
+  { name: 'Romanian Deadlift', equipment: 'Barbell & Bumper Plates', muscleGroup: 'legs' as MuscleTarget },
+  
+  // Back
+  { name: 'Barbell Bent-Over Row', equipment: 'Barbell & Bumper Plates', muscleGroup: 'back' as MuscleTarget },
+  { name: 'Cable Pulldown (MAG Handle)', equipment: 'Power Rack Pulley & Cable Attachment', muscleGroup: 'back' as MuscleTarget },
+  { name: 'Landmine Single-Arm Row', equipment: 'Titan Power Rack (Landmine)', muscleGroup: 'back' as MuscleTarget },
+  { name: 'Single-Arm Row', equipment: 'Hex Dumbbells & NordicTrack Bench', muscleGroup: 'back' as MuscleTarget },
+  { name: 'Kettlebell Swings', equipment: 'Kettlebell (Up to 71 lbs)', muscleGroup: 'back' as MuscleTarget },
+
+  // Chest
+  { name: 'Barbell Bench Press', equipment: 'Titan Power Rack & NordicTrack Bench', muscleGroup: 'chest' as MuscleTarget },
+  { name: 'Incline Dumbbell Press', equipment: 'Hex Dumbbells & NordicTrack Bench', muscleGroup: 'chest' as MuscleTarget },
+  { name: 'Landmine Chest Press', equipment: 'Titan Power Rack (Landmine)', muscleGroup: 'chest' as MuscleTarget },
+  { name: 'Cable Chest Flyes', equipment: 'Power Rack Pulley & Cable Attachment', muscleGroup: 'chest' as MuscleTarget },
+
+  // Shoulders
+  { name: 'Overhead Barbell Press', equipment: 'Titan Power Rack & Barbell', muscleGroup: 'shoulders' as MuscleTarget },
+  { name: 'Dumbbell Lateral Raise', equipment: 'Hex Dumbbells', muscleGroup: 'shoulders' as MuscleTarget },
+  { name: 'Landmine Shoulder Press', equipment: 'Titan Power Rack (Landmine)', muscleGroup: 'shoulders' as MuscleTarget },
+  { name: 'Cable Face Pulls', equipment: 'Power Rack Pulley & Cable Attachment', muscleGroup: 'shoulders' as MuscleTarget },
+
+  // Arms
+  { name: 'Cable Tricep Pushdown', equipment: 'Power Rack Pulley & Cable Attachment', muscleGroup: 'arms' as MuscleTarget },
+  { name: 'Dumbbell Bicep Curls', equipment: 'Hex Dumbbells', muscleGroup: 'arms' as MuscleTarget },
+  { name: 'Tricep Bench Dips', equipment: 'NordicTrack Bench', muscleGroup: 'arms' as MuscleTarget },
+  { name: 'Band Hammer Curls', equipment: 'Resistance Bands', muscleGroup: 'arms' as MuscleTarget },
+
+  // Core & Conditioning
+  { name: 'Slam Ball Overheads', equipment: 'Medicine & Slam Balls', muscleGroup: 'core' as MuscleTarget },
+  { name: 'Landmine Rotations', equipment: 'Titan Power Rack (Landmine)', muscleGroup: 'core' as MuscleTarget },
+  { name: 'Battle Rope Waves', equipment: 'Battle Ropes', muscleGroup: 'cardio' as MuscleTarget },
+  { name: 'Concept2 Rower Intervals', equipment: 'Concept2 Rower', muscleGroup: 'cardio' as MuscleTarget },
+  { name: 'Assault Bike Sprint Intervals', equipment: 'Assault AirBike', muscleGroup: 'cardio' as MuscleTarget },
+];
+
+// Expanded Planet Fitness Equipment Pool
+const PLANET_FITNESS_POOL = [
+  // Cardio Equipment
+  { name: 'Treadmill Run / Walk', equipment: 'Treadmills', muscleGroup: 'cardio' as MuscleTarget },
+  { name: 'Elliptical Glider', equipment: 'Ellipticals', muscleGroup: 'cardio' as MuscleTarget },
+  { name: 'Arc Trainer Strides', equipment: 'Arc Trainers', muscleGroup: 'cardio' as MuscleTarget },
+  { name: 'Stationary Bike (Upright / Recumbent)', equipment: 'Stationary Bikes (Upright and Recumbent)', muscleGroup: 'cardio' as MuscleTarget },
+  { name: 'Stair Climber / Stepmill', equipment: 'Stair Climbers / Stepmills', muscleGroup: 'cardio' as MuscleTarget },
+  { name: 'PF Rowing Machine', equipment: 'Rowing Machines', muscleGroup: 'cardio' as MuscleTarget },
+  { name: 'Recumbent Stepper Intervals', equipment: 'Recumbent Steppers', muscleGroup: 'cardio' as MuscleTarget },
+  { name: 'Upper Body Ergometer (Arm Bike)', equipment: 'Upper Body Ergometers (Arm Bikes)', muscleGroup: 'cardio' as MuscleTarget },
+
+  // Selectorized Strength Machines
+  { name: 'Machine Chest Press', equipment: 'Chest Press Machine', muscleGroup: 'chest' as MuscleTarget },
+  { name: 'Pectoral Fly / Reverse Fly', equipment: 'Pectoral Fly / Reverse Fly Machine', muscleGroup: 'chest' as MuscleTarget },
+  { name: 'Machine Lat Pulldown', equipment: 'Lat Pulldown Machine', muscleGroup: 'back' as MuscleTarget },
+  { name: 'Seated Cable Row', equipment: 'Seated Row Machine', muscleGroup: 'back' as MuscleTarget },
+  { name: 'Seated Shoulder Press', equipment: 'Shoulder Press Machine', muscleGroup: 'shoulders' as MuscleTarget },
+  { name: 'Machine Lateral Raise', equipment: 'Lateral Raise Machine', muscleGroup: 'shoulders' as MuscleTarget },
+  { name: 'Machine Rear Deltoid Fly', equipment: 'Rear Deltoid Machine', muscleGroup: 'shoulders' as MuscleTarget },
+  { name: 'Machine Bicep Curl', equipment: 'Bicep Curl Machine', muscleGroup: 'arms' as MuscleTarget },
+  { name: 'Tricep Extension / Tricep Press', equipment: 'Tricep Extension / Tricep Press Machine', muscleGroup: 'arms' as MuscleTarget },
+
+  { name: 'Seated Leg Press', equipment: 'Seated Leg Press Machine', muscleGroup: 'legs' as MuscleTarget },
+  { name: 'Seated Leg Extension', equipment: 'Leg Extension Machine', muscleGroup: 'legs' as MuscleTarget },
+  { name: 'Lying or Seated Leg Curl', equipment: 'Lying or Seated Leg Curl Machine', muscleGroup: 'legs' as MuscleTarget },
+  { name: 'Calf Extension Machine', equipment: 'Calf Extension Machine', muscleGroup: 'legs' as MuscleTarget },
+  { name: 'Hip Adduction and Abduction', equipment: 'Hip Adduction and Abduction Machine', muscleGroup: 'legs' as MuscleTarget },
+  { name: 'Glute Kickback Machine', equipment: 'Glute Machine', muscleGroup: 'legs' as MuscleTarget },
+
+  { name: 'Abdominal Crunch Machine', equipment: 'Abdominal Crunch Machine', muscleGroup: 'core' as MuscleTarget },
+  { name: 'Machine Back Extension', equipment: 'Back Extension Machine', muscleGroup: 'back' as MuscleTarget },
+  { name: 'Torso Rotation Machine', equipment: 'Torso Rotation Machine', muscleGroup: 'core' as MuscleTarget },
+
+  // Free Weights & Cable Systems
+  { name: 'Smith Machine Squat / Bench', equipment: 'Smith Machines', muscleGroup: 'legs' as MuscleTarget },
+  { name: 'Dual Cable Pulley Crossovers / Face Pulls', equipment: 'Dual Adjustable Cable Pulleys & Cable Towers', muscleGroup: 'chest' as MuscleTarget },
+  { name: 'Assisted Pull-Up and Dip', equipment: 'Assisted Pull-Up and Dip Machine', muscleGroup: 'back' as MuscleTarget },
+  { name: 'Dumbbell & Fixed Barbell Moves', equipment: 'Dumbbells & Fixed Barbells', muscleGroup: 'arms' as MuscleTarget },
+
+  // Circuit & Mobility Accessories
+  { name: '30-Minute Express Station Rotation', equipment: '30-Minute Express Circuit Stations', muscleGroup: 'cardio' as MuscleTarget },
+  { name: 'TRX / Medicine Ball / Kettlebell Mobility Work', equipment: 'Stretch/Mobility Accessories', muscleGroup: 'core' as MuscleTarget },
 ];
 
 export default function App() {
-  const [activeProfile, setActiveProfile] = useState<Profile>('Roxanne');
+  const [activeProfile, setActiveProfile] = useState<UserProfile>('Roxanne');
+  const [activeTab, setActiveTab] = useState<'generator' | 'workout' | 'cardio' | 'metrics' | 'history'>('generator');
   const [locationMode, setLocationMode] = useState<LocationMode>('garage');
-  const [activeTab, setActiveTab] = useState<'plan' | 'log' | 'metrics' | 'history' | 'equipment'>('plan');
+  
+  const [filterMode, setFilterMode] = useState<FilterMode>('muscle');
+  const [selectedMuscles, setSelectedMuscles] = useState<MuscleTarget[]>(['legs', 'back']);
+  const [selectedEquipment, setSelectedEquipment] = useState<string[]>([]);
+  const [selectedFormat, setSelectedFormat] = useState<WorkoutFormat>('standard');
+  const [generatedWorkout, setGeneratedWorkout] = useState<GeneratedExercise[]>([]);
 
-  const isRoxanne = activeProfile === 'Roxanne';
+  const theme = PROFILE_STYLES[activeProfile];
 
-  // Dynamic Theme Colors
-  const primaryColor = isRoxanne ? '#ea580c' : '#8b5cf6';
-  const primaryGradient = isRoxanne 
-    ? 'linear-gradient(135deg, #d97706, #ea580c, #dc2626)' 
-    : 'linear-gradient(135deg, #6b21a8, #8b5cf6, #4c1d95)';
-  const badgeBg = isRoxanne ? 'rgba(234, 88, 12, 0.2)' : 'rgba(139, 92, 246, 0.2)';
-  const badgeBorder = isRoxanne ? '#ea580c' : '#8b5cf6';
+  const [metricsLogs, setMetricsLogs] = useState<BodyMetrics[]>(() => JSON.parse(localStorage.getItem('duofit_metrics') || '[]'));
+  const [cardioLogs, setCardioLogs] = useState<CardioLog[]>(() => JSON.parse(localStorage.getItem('duofit_cardio') || '[]'));
+  const [strengthLogs, setStrengthLogs] = useState<StrengthLog[]>(() => JSON.parse(localStorage.getItem('duofit_strength') || '[]'));
 
-  // Data Persistence State
-  const [equipment, setEquipment] = useState<string[]>(() => {
-    const saved = localStorage.getItem('duofit_equipment');
-    return saved ? JSON.parse(saved) : GARAGE_EQUIPMENT.map(e => e.id);
-  });
+  useEffect(() => localStorage.setItem('duofit_metrics', JSON.stringify(metricsLogs)), [metricsLogs]);
+  useEffect(() => localStorage.setItem('duofit_cardio', JSON.stringify(cardioLogs)), [cardioLogs]);
+  useEffect(() => localStorage.setItem('duofit_strength', JSON.stringify(strengthLogs)), [strengthLogs]);
 
-  const [workoutLogs, setWorkoutLogs] = useState<WorkoutLog[]>(() => {
-    const saved = localStorage.getItem('duofit_logs');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [activeRoutineName, setActiveRoutineName] = useState('Custom Workout');
+  const [exName, setExName] = useState('');
+  const [exWeight, setExWeight] = useState('');
+  const [exReps, setExReps] = useState('');
+  const [exSeat, setExSeat] = useState('');
+  const [currentSessionSets, setCurrentSessionSets] = useState<StrengthSet[]>([]);
 
-  const [metricLogs, setMetricLogs] = useState<BodyMetricLog[]>(() => {
-    const saved = localStorage.getItem('duofit_metrics');
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  const [walkLogs, setWalkLogs] = useState<MorningWalkLog[]>(() => {
-    const saved = localStorage.getItem('duofit_walks');
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  // Input States
+  const [cardioType, setCardioType] = useState<CardioLog['type']>('Run');
+  const [cardioDist, setCardioDist] = useState('');
+  const [cardioTime, setCardioTime] = useState('');
+  const [cardioNotes, setCardioNotes] = useState('');
   const [weightInput, setWeightInput] = useState('');
-  const [heightFeet, setHeightFeet] = useState('5');
-  const [heightInches, setHeightInches] = useState('6');
-  const [metricNotes, setMetricNotes] = useState('');
+  const [heightInput, setHeightInput] = useState('65');
 
-  const [walkDistance, setWalkDistance] = useState('');
-  const [walkDuration, setWalkDuration] = useState('');
-  const [walkNotes, setWalkNotes] = useState('');
+  const currentPool = locationMode === 'garage' ? GARAGE_POOL : PLANET_FITNESS_POOL;
+  const availableEquipmentList = Array.from(new Set(currentPool.map((item) => item.equipment)));
 
-  const [workoutType, setWorkoutType] = useState<'Strength' | 'Cardio' | 'Conditioning' | 'Mixed'>('Strength');
-  const [workoutTitle, setWorkoutTitle] = useState('');
-  const [cardioActivity,] = useState('Concept2 Rower / Treadmill');
-  const [distance, setDistance] = useState('');
-  const [duration, setDuration] = useState('');
-  const [exercises, setExercises] = useState<ExerciseLog[]>([
-    { id: '1', name: locationMode === 'garage' ? 'NordicTrack Bench Press' : 'PF Smith Machine Press', sets: 4, reps: 8, weight: 135 },
-  ]);
-  const [notes, setNotes] = useState('');
-
-  // LocalStorage Sync
-  useEffect(() => localStorage.setItem('duofit_equipment', JSON.stringify(equipment)), [equipment]);
-  useEffect(() => localStorage.setItem('duofit_logs', JSON.stringify(workoutLogs)), [workoutLogs]);
-  useEffect(() => localStorage.setItem('duofit_metrics', JSON.stringify(metricLogs)), [metricLogs]);
-  useEffect(() => localStorage.setItem('duofit_walks', JSON.stringify(walkLogs)), [walkLogs]);
-
-  // BMI Calculation
-  const calculatedInches = (parseInt(heightFeet) || 0) * 12 + (parseInt(heightInches) || 0);
-  const numericWeight = parseFloat(weightInput) || 0;
-  const liveBmi = (numericWeight > 0 && calculatedInches > 0)
-    ? ((numericWeight / (calculatedInches * calculatedInches)) * 703).toFixed(1)
-    : '0.0';
-
-  const toggleEquipment = (id: string) => {
-    setEquipment((prev) => prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]);
+  const toggleMuscle = (muscle: MuscleTarget) => {
+    setSelectedMuscles((prev) =>
+      prev.includes(muscle) ? prev.filter((m) => m !== muscle) : [...prev, muscle]
+    );
   };
 
-  const addExerciseRow = () => {
-    setExercises([...exercises, { id: Date.now().toString(), name: '', sets: 3, reps: 10, weight: 0 }]);
+  const toggleEquipment = (eq: string) => {
+    setSelectedEquipment((prev) =>
+      prev.includes(eq) ? prev.filter((e) => e !== eq) : [...prev, eq]
+    );
   };
 
-  const updateExercise = (id: string, field: keyof ExerciseLog, value: any) => {
-    setExercises((prev) => prev.map((e) => (e.id === id ? { ...e, [field]: value } : e)));
+  const formatPrescription = (format: WorkoutFormat): string => {
+    switch (format) {
+      case 'emom': return '⏱️ EMOM: 8-10 reps at start of every min (10 mins)';
+      case 'amrap': return '🔥 AMRAP: 12 reps per exercise in a 12-min circuit';
+      case 'pyramid': return '📐 Pyramid: 12 reps, 10 reps, 8 reps, 6 reps (increase weight)';
+      case 'standard': default: return '🎯 Standard: 3 sets x 10-12 reps (60s rest)';
+    }
   };
 
-  const removeExercise = (id: string) => {
-    setExercises((prev) => prev.filter((e) => e.id !== id));
+  const handleGenerateWorkout = () => {
+    let matches = [];
+
+    if (filterMode === 'muscle') {
+      if (selectedMuscles.length === 0) return;
+      matches = currentPool.filter((item) => selectedMuscles.includes(item.muscleGroup));
+    } else {
+      if (selectedEquipment.length === 0) return;
+      matches = currentPool.filter((item) => selectedEquipment.includes(item.equipment));
+    }
+
+    const compiled: GeneratedExercise[] = matches.map((item) => ({
+      ...item,
+      prescription: formatPrescription(selectedFormat),
+    }));
+
+    setGeneratedWorkout(compiled);
   };
 
-  const handleSaveWorkout = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!workoutTitle) return;
+  const handleStartGeneratedWorkout = () => {
+    const formatLabel = selectedFormat.toUpperCase();
+    const locLabel = locationMode === 'garage' ? 'Garage' : 'PF';
+    setActiveRoutineName(`${locLabel} [${formatLabel}] Session`);
+    setActiveTab('workout');
+  };
 
-    const newLog: WorkoutLog = {
-      id: `log-${Date.now()}`,
+  const handleAddSet = () => {
+    if (!exName || !exWeight || !exReps) return;
+    const newSet: StrengthSet = {
+      id: Date.now().toString(),
+      exerciseName: exName,
+      weightLbs: parseFloat(exWeight) || 0,
+      reps: parseInt(exReps) || 0,
+      seatSetting: locationMode === 'planet_fitness' ? exSeat : undefined,
+    };
+    setCurrentSessionSets([...currentSessionSets, newSet]);
+    setExWeight('');
+    setExReps('');
+  };
+
+  const handleSaveWorkout = () => {
+    if (currentSessionSets.length === 0) return;
+    const newSession: StrengthLog = {
+      id: Date.now().toString(),
+      date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
       profile: activeProfile,
       location: locationMode,
-      date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-      type: workoutType,
-      title: workoutTitle,
-      exercises: workoutType !== 'Cardio' ? exercises : [],
-      cardioDetails: workoutType !== 'Strength' ? {
-        activity: cardioActivity,
-        distanceMiles: parseFloat(distance) || 0,
-        durationMinutes: parseInt(duration) || 0,
-      } : undefined,
-      notes,
+      routineName: activeRoutineName,
+      sets: currentSessionSets,
     };
-
-    setWorkoutLogs([newLog, ...workoutLogs]);
-    setWorkoutTitle('');
-    setDistance('');
-    setDuration('');
-    setNotes('');
-    alert(`🔥 Workout saved for ${activeProfile}!`);
-    setActiveTab('history');
+    setStrengthLogs([newSession, ...strengthLogs]);
+    setCurrentSessionSets([]);
+    setExName('');
   };
 
-  const handleSaveMetric = (e: React.FormEvent) => {
+  const handleAddCardio = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!numericWeight || calculatedInches <= 0) return;
-
-    const newMetric: BodyMetricLog = {
-      id: `metric-${Date.now()}`,
+    if (!cardioDist || !cardioTime) return;
+    setCardioLogs([{
+      id: Date.now().toString(),
+      date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
       profile: activeProfile,
-      date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-      weightLbs: numericWeight,
-      heightInches: calculatedInches,
-      bmi: parseFloat(liveBmi),
-      notes: metricNotes,
-    };
+      type: cardioType,
+      distanceMiles: parseFloat(cardioDist) || 0,
+      durationMinutes: parseInt(cardioTime) || 0,
+      notes: cardioNotes,
+    }, ...cardioLogs]);
+    setCardioDist('');
+    setCardioTime('');
+    setCardioNotes('');
+  };
 
-    setMetricLogs([newMetric, ...metricLogs]);
+  const handleAddMetrics = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!weightInput) return;
+    setMetricsLogs([{
+      id: Date.now().toString(),
+      date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      profile: activeProfile,
+      weightLbs: parseFloat(weightInput) || 0,
+      heightInches: parseFloat(heightInput) || 65,
+    }, ...metricsLogs]);
     setWeightInput('');
-    setMetricNotes('');
-    alert(`📊 Body metrics logged for ${activeProfile}!`);
   };
 
-  const handleSaveWalk = (e: React.FormEvent) => {
-    e.preventDefault();
-    const dist = parseFloat(walkDistance);
-    const dur = parseInt(walkDuration);
-    if (!dist || !dur) return;
-
-    const newWalk: MorningWalkLog = {
-      id: `walk-${Date.now()}`,
-      profile: activeProfile,
-      date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-      distanceMiles: dist,
-      durationMinutes: dur,
-      notes: walkNotes,
-    };
-
-    setWalkLogs([newWalk, ...walkLogs]);
-    setWalkDistance('');
-    setWalkDuration('');
-    setWalkNotes('');
-    alert(`🌅 Morning walk logged for ${activeProfile}!`);
-  };
-
-  const startPlanSession = (title: string, type: 'Strength' | 'Cardio' | 'Conditioning' | 'Mixed') => {
-    setWorkoutTitle(title);
-    setWorkoutType(type);
-    setActiveTab('log');
-  };
-
-  const profileLogs = workoutLogs.filter((log) => log.profile === activeProfile);
-  const profileMetrics = metricLogs.filter((m) => m.profile === activeProfile);
-  const profileWalks = walkLogs.filter((w) => w.profile === activeProfile);
-
-  const latestMetric = profileMetrics[0];
-  const baselineMetric = profileMetrics[profileMetrics.length - 1];
-  const weightDifference = (latestMetric && baselineMetric && profileMetrics.length > 1)
-    ? (latestMetric.weightLbs - baselineMetric.weightLbs).toFixed(1)
-    : null;
-
-  // Unified Feed Aggregation
-  const combinedHistory = [
-    ...profileLogs.map(l => ({ ...l, feedType: 'workout' as const })),
-    ...profileMetrics.map(m => ({ ...m, feedType: 'metric' as const })),
-    ...profileWalks.map(w => ({ ...w, feedType: 'walk' as const })),
-  ].sort((a, b) => b.id.localeCompare(a.id));
+  const latestMetrics = metricsLogs.find((m) => m.profile === activeProfile);
 
   return (
-    <div style={{ backgroundColor: '#090d16', minHeight: '100vh', color: '#f1f5f9', fontFamily: 'sans-serif', padding: '16px' }}>
-      <div style={{ maxWidth: '800px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+    <div style={{ backgroundColor: '#0f172a', minHeight: '100vh', color: '#f8fafc', fontFamily: 'sans-serif', padding: '16px' }}>
+      <div style={{ maxWidth: '800px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
-        {/* Dynamic Header */}
-        <header style={{
-          background: primaryGradient,
-          padding: '24px',
-          borderRadius: '24px',
-          boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.5)',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '16px'
-        }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <h1 style={{ fontSize: '26px', fontWeight: '900', color: '#ffffff', margin: 0 }}>DUOFIT TRACKER</h1>
-                <span style={{ fontSize: '11px', background: 'rgba(255,255,255,0.25)', padding: '2px 8px', borderRadius: '12px', fontWeight: 'bold' }}>
-                  {locationMode === 'garage' ? '🏠 Garage Edition' : '🟣 Planet Fitness Edition'}
-                </span>
-              </div>
-              <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.9)', marginTop: '4px', margin: 0 }}>
-                {isRoxanne ? '⚡ Sunset Orange Mode (Roxanne)' : '💜 Royal Purple Mode (Diana)'}
-              </p>
-            </div>
-
-            {/* Profile & Location Switchers */}
-            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-              {/* Location Toggle */}
-              <div style={{ background: 'rgba(15, 23, 42, 0.7)', padding: '4px', borderRadius: '16px', display: 'flex', gap: '4px' }}>
-                <button
-                  onClick={() => setLocationMode('garage')}
-                  style={{
-                    padding: '8px 12px',
-                    borderRadius: '12px',
-                    border: 'none',
-                    fontWeight: 'bold',
-                    fontSize: '11px',
-                    cursor: 'pointer',
-                    background: locationMode === 'garage' ? '#38bdf8' : 'transparent',
-                    color: locationMode === 'garage' ? '#0f172a' : '#ffffff',
-                  }}
-                >
-                  🏠 Garage
-                </button>
-                <button
-                  onClick={() => setLocationMode('planet_fitness')}
-                  style={{
-                    padding: '8px 12px',
-                    borderRadius: '12px',
-                    border: 'none',
-                    fontWeight: 'bold',
-                    fontSize: '11px',
-                    cursor: 'pointer',
-                    background: locationMode === 'planet_fitness' ? '#a855f7' : 'transparent',
-                    color: '#ffffff',
-                  }}
-                >
-                  🟣 PF Gym
-                </button>
-              </div>
-
-              {/* Profile Toggle */}
-              <div style={{ background: 'rgba(15, 23, 42, 0.7)', padding: '4px', borderRadius: '16px', display: 'flex', gap: '4px' }}>
-                <button
-                  onClick={() => setActiveProfile('Roxanne')}
-                  style={{
-                    padding: '8px 12px',
-                    borderRadius: '12px',
-                    border: 'none',
-                    fontWeight: 'bold',
-                    fontSize: '11px',
-                    cursor: 'pointer',
-                    background: isRoxanne ? '#ea580c' : 'transparent',
-                    color: '#ffffff',
-                  }}
-                >
-                  🔥 Roxanne
-                </button>
-                <button
-                  onClick={() => setActiveProfile('Diana')}
-                  style={{
-                    padding: '8px 12px',
-                    borderRadius: '12px',
-                    border: 'none',
-                    fontWeight: 'bold',
-                    fontSize: '11px',
-                    cursor: 'pointer',
-                    background: !isRoxanne ? '#8b5cf6' : 'transparent',
-                    color: '#ffffff',
-                  }}
-                >
-                  👑 Diana
-                </button>
-              </div>
-            </div>
+        <header style={{ background: '#1e293b', padding: '16px', borderRadius: '20px', border: `2px solid ${theme.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <h1 style={{ fontSize: '20px', fontWeight: '900', margin: 0, color: theme.primary }}>⚡ DuoFit Engine</h1>
+            <p style={{ fontSize: '12px', color: '#94a3b8', margin: '2px 0 0 0' }}>Profile: <strong style={{ color: theme.accent }}>{activeProfile}</strong></p>
           </div>
 
-          {/* Quick Stats Bar */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '8px' }}>
-            <div style={{ background: 'rgba(15, 23, 42, 0.5)', padding: '8px 12px', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', fontSize: '11px' }}>
-              <span style={{ color: 'rgba(255,255,255,0.7)' }}>Workouts:</span>
-              <strong style={{ color: '#fff' }}>{profileLogs.length}</strong>
-            </div>
-            <div style={{ background: 'rgba(15, 23, 42, 0.5)', padding: '8px 12px', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', fontSize: '11px' }}>
-              <span style={{ color: 'rgba(255,255,255,0.7)' }}>Morning Walks:</span>
-              <strong style={{ color: '#fff' }}>{profileWalks.length}</strong>
-            </div>
-            <div style={{ background: 'rgba(15, 23, 42, 0.5)', padding: '8px 12px', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', fontSize: '11px' }}>
-              <span style={{ color: 'rgba(255,255,255,0.7)' }}>Latest Weight:</span>
-              <strong style={{ color: '#fff' }}>{latestMetric ? `${latestMetric.weightLbs} lbs` : '--'}</strong>
-            </div>
-          </div>
-
-          {/* Navigation Bar */}
-          <nav style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', justifyContent: 'center' }}>
-            {[
-              { id: 'plan', label: '📋 Custom Plan' },
-              { id: 'log', label: '⚡ Log Workout' },
-              { id: 'metrics', label: '⚖️ Weight & Walks' },
-              { id: 'history', label: `📊 Progress Feed (${combinedHistory.length})` },
-              { id: 'equipment', label: '⚙️ Garage Gear' },
-            ].map((tab) => (
+          <div style={{ display: 'flex', gap: '6px', background: '#0f172a', padding: '4px', borderRadius: '12px', border: '1px solid #334155' }}>
+            {(['Roxanne', 'Diana'] as UserProfile[]).map((prof) => (
               <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id as any)}
+                key={prof}
+                onClick={() => setActiveProfile(prof)}
                 style={{
-                  padding: '8px 12px',
-                  borderRadius: '12px',
-                  border: 'none',
-                  fontSize: '11px',
-                  fontWeight: 'bold',
-                  cursor: 'pointer',
-                  background: activeTab === tab.id ? '#ffffff' : 'rgba(15, 23, 42, 0.6)',
-                  color: activeTab === tab.id ? primaryColor : '#ffffff',
+                  padding: '8px 14px', borderRadius: '8px', border: 'none', fontWeight: 'bold', fontSize: '12px', cursor: 'pointer',
+                  background: activeProfile === prof ? PROFILE_STYLES[prof].primary : 'transparent',
+                  color: activeProfile === prof ? '#0f172a' : '#cbd5e1',
                 }}
               >
-                {tab.label}
+                👤 {prof}
               </button>
             ))}
-          </nav>
+          </div>
         </header>
 
-        {/* METRICS & MORNING WALKS TAB */}
-        {activeTab === 'metrics' && (
-          <main style={{ background: '#1e293b', padding: '20px', borderRadius: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div style={{ borderBottom: '1px solid #334155', paddingBottom: '12px' }}>
-              <h2 style={{ fontSize: '18px', fontWeight: 'bold', color: primaryColor, margin: 0 }}>
-                ⚖️ Weight, BMI & Morning Walk Log ({activeProfile})
-              </h2>
-            </div>
+        <div style={{ display: 'flex', gap: '8px', background: '#1e293b', padding: '6px', borderRadius: '16px', border: '1px solid #334155' }}>
+          <button
+            onClick={() => { setLocationMode('garage'); setGeneratedWorkout([]); setSelectedEquipment([]); }}
+            style={{
+              flex: 1, padding: '10px', borderRadius: '12px', border: 'none', fontWeight: 'bold', fontSize: '13px', cursor: 'pointer',
+              background: locationMode === 'garage' ? '#10b981' : 'transparent',
+              color: locationMode === 'garage' ? '#0f172a' : '#cbd5e1',
+            }}
+          >
+            🏠 Garage Gym Mode
+          </button>
+          <button
+            onClick={() => { setLocationMode('planet_fitness'); setGeneratedWorkout([]); setSelectedEquipment([]); }}
+            style={{
+              flex: 1, padding: '10px', borderRadius: '12px', border: 'none', fontWeight: 'bold', fontSize: '13px', cursor: 'pointer',
+              background: locationMode === 'planet_fitness' ? '#a855f7' : 'transparent',
+              color: locationMode === 'planet_fitness' ? '#fff' : '#cbd5e1',
+            }}
+          >
+            🏋️ Planet Fitness Mode
+          </button>
+        </div>
 
-            {/* Quick Metrics Cards */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '10px' }}>
-              <div style={{ background: '#0f172a', padding: '12px', borderRadius: '12px', border: '1px solid #334155' }}>
-                <span style={{ fontSize: '11px', color: '#94a3b8' }}>Current Weight</span>
-                <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#fff', marginTop: '4px' }}>
-                  {latestMetric ? `${latestMetric.weightLbs} lbs` : 'No logs yet'}
-                </div>
-              </div>
-              <div style={{ background: '#0f172a', padding: '12px', borderRadius: '12px', border: '1px solid #334155' }}>
-                <span style={{ fontSize: '11px', color: '#94a3b8' }}>Auto-Calculated BMI</span>
-                <div style={{ fontSize: '18px', fontWeight: 'bold', color: primaryColor, marginTop: '4px' }}>
-                  {latestMetric ? latestMetric.bmi : 'No logs yet'}
-                </div>
-              </div>
-              <div style={{ background: '#0f172a', padding: '12px', borderRadius: '12px', border: '1px solid #334155' }}>
-                <span style={{ fontSize: '11px', color: '#94a3b8' }}>Weight Loss Change</span>
-                <div style={{ fontSize: '18px', fontWeight: 'bold', color: weightDifference && parseFloat(weightDifference) <= 0 ? '#10b981' : '#ef4444', marginTop: '4px' }}>
-                  {weightDifference ? `${weightDifference} lbs` : 'Log 2+ entries'}
-                </div>
-              </div>
-            </div>
+        <div style={{ display: 'flex', gap: '6px', overflowX: 'auto' }}>
+          {[
+            { id: 'generator', label: '⚡ Workout Builder' },
+            { id: 'workout', label: '🏋️ Active Workout' },
+            { id: 'cardio', label: '🏃 Cardio' },
+            { id: 'metrics', label: '⚖️ Weight' },
+            { id: 'history', label: '📜 History' },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as any)}
+              style={{
+                flex: 1, padding: '8px 12px', borderRadius: '10px', border: `1px solid ${activeTab === tab.id ? theme.border : '#334155'}`, fontSize: '12px', fontWeight: 'bold', cursor: 'pointer', whiteSpace: 'nowrap',
+                background: activeTab === tab.id ? theme.bgBadge : '#1e293b',
+                color: activeTab === tab.id ? theme.accent : '#94a3b8',
+              }}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
 
-            {/* Morning Walk Logger */}
-            <form onSubmit={handleSaveWalk} style={{ display: 'flex', flexDirection: 'column', gap: '12px', background: '#0f172a', padding: '16px', borderRadius: '16px', border: '1px solid #38bdf8' }}>
-              <h3 style={{ fontSize: '14px', fontWeight: 'bold', color: '#38bdf8', margin: 0 }}>🌅 Quick Log: Morning Walk</h3>
+        {activeTab === 'generator' && (
+          <main style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <section style={{ background: '#1e293b', padding: '16px', borderRadius: '20px', border: `1px solid ${theme.border}`, display: 'flex', flexDirection: 'column', gap: '14px' }}>
               
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '10px' }}>
-                <div>
-                  <label style={{ fontSize: '11px', color: '#cbd5e1', display: 'block', marginBottom: '4px' }}>Distance (Miles)</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    placeholder="e.g., 3.25"
-                    value={walkDistance}
-                    onChange={(e) => setWalkDistance(e.target.value)}
-                    required
-                    style={{ width: '100%', background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', padding: '8px', color: '#fff', fontSize: '12px', boxSizing: 'border-box' }}
-                  />
-                </div>
-
-                <div>
-                  <label style={{ fontSize: '11px', color: '#cbd5e1', display: 'block', marginBottom: '4px' }}>Time (Minutes)</label>
-                  <input
-                    type="number"
-                    placeholder="e.g., 45"
-                    value={walkDuration}
-                    onChange={(e) => setWalkDuration(e.target.value)}
-                    required
-                    style={{ width: '100%', background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', padding: '8px', color: '#fff', fontSize: '12px', boxSizing: 'border-box' }}
-                  />
-                </div>
-              </div>
-
               <div>
-                <label style={{ fontSize: '11px', color: '#cbd5e1', display: 'block', marginBottom: '4px' }}>Notes</label>
-                <input
-                  type="text"
-                  placeholder="e.g., Early 5 AM neighborhood pace walk..."
-                  value={walkNotes}
-                  onChange={(e) => setWalkNotes(e.target.value)}
-                  style={{ width: '100%', background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', padding: '8px', color: '#fff', fontSize: '12px', boxSizing: 'border-box' }}
-                />
-              </div>
-
-              <button type="submit" style={{ background: '#0284c7', color: '#fff', border: 'none', padding: '10px', borderRadius: '10px', fontWeight: 'bold', fontSize: '12px', cursor: 'pointer' }}>
-                Save Morning Walk 🌅
-              </button>
-            </form>
-
-            {/* Weight & BMI Input Form */}
-            <form onSubmit={handleSaveMetric} style={{ display: 'flex', flexDirection: 'column', gap: '12px', background: '#0f172a', padding: '16px', borderRadius: '16px', border: '1px solid #334155' }}>
-              <h3 style={{ fontSize: '14px', fontWeight: 'bold', color: '#fff', margin: 0 }}>⚖️ Log Weight Entry</h3>
-              
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '10px' }}>
-                <div>
-                  <label style={{ fontSize: '11px', color: '#cbd5e1', display: 'block', marginBottom: '4px' }}>Weight (lbs)</label>
-                  <input
-                    type="number"
-                    step="0.1"
-                    placeholder="e.g., 165.4"
-                    value={weightInput}
-                    onChange={(e) => setWeightInput(e.target.value)}
-                    required
-                    style={{ width: '100%', background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', padding: '8px', color: '#fff', fontSize: '12px', boxSizing: 'border-box' }}
-                  />
-                </div>
-
-                <div>
-                  <label style={{ fontSize: '11px', color: '#cbd5e1', display: 'block', marginBottom: '4px' }}>Height (Feet & Inches)</label>
-                  <div style={{ display: 'flex', gap: '4px' }}>
-                    <input
-                      type="number"
-                      placeholder="Ft"
-                      value={heightFeet}
-                      onChange={(e) => setHeightFeet(e.target.value)}
-                      style={{ width: '50%', background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', padding: '8px', color: '#fff', fontSize: '12px', textAlign: 'center' }}
-                    />
-                    <input
-                      type="number"
-                      placeholder="In"
-                      value={heightInches}
-                      onChange={(e) => setHeightInches(e.target.value)}
-                      style={{ width: '50%', background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', padding: '8px', color: '#fff', fontSize: '12px', textAlign: 'center' }}
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label style={{ fontSize: '11px', color: '#cbd5e1', display: 'block', marginBottom: '4px' }}>Auto BMI</label>
-                  <div style={{ background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', padding: '8px', color: primaryColor, fontWeight: 'bold', fontSize: '12px', textAlign: 'center' }}>
-                    {liveBmi}
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <label style={{ fontSize: '11px', color: '#cbd5e1', display: 'block', marginBottom: '4px' }}>Notes</label>
-                <input
-                  type="text"
-                  placeholder="e.g., Post morning walk..."
-                  value={metricNotes}
-                  onChange={(e) => setMetricNotes(e.target.value)}
-                  style={{ width: '100%', background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', padding: '8px', color: '#fff', fontSize: '12px', boxSizing: 'border-box' }}
-                />
-              </div>
-
-              <button type="submit" style={{ background: primaryColor, color: '#fff', border: 'none', padding: '10px', borderRadius: '10px', fontWeight: 'bold', fontSize: '12px', cursor: 'pointer' }}>
-                Save Body Metrics 📊
-              </button>
-            </form>
-          </main>
-        )}
-
-        {/* CUSTOM PLAN TAB */}
-        {activeTab === 'plan' && (
-          <main style={{ background: '#1e293b', padding: '20px', borderRadius: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div style={{ borderBottom: '1px solid #334155', paddingBottom: '12px' }}>
-              <h2 style={{ fontSize: '18px', fontWeight: 'bold', color: primaryColor, margin: 0 }}>
-                {locationMode === 'garage' 
-                  ? `🏠 Garage Edition Plan (${activeProfile})` 
-                  : `🟣 Planet Fitness Plan (${activeProfile})`}
-              </h2>
-              <p style={{ fontSize: '12px', color: '#94a3b8', margin: '4px 0 0 0' }}>
-                {locationMode === 'garage' 
-                  ? 'Tailored for home garage equipment.' 
-                  : 'Tailored for Planet Fitness Smith Machines, Cable Towers & Cardio Decks.'}
-              </p>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '12px' }}>
-              {(locationMode === 'garage' ? [
-                {
-                  title: '🏃 Session 1: Cardio & Endurance',
-                  tag: 'Garage Cardio',
-                  items: [
-                    equipment.includes('rower') && 'Concept2 Rower: 500m Interval Sprints (5 sets)',
-                    equipment.includes('airbike') && 'Assault AirBike: 20/10 Calorie Intervals (15 mins)',
-                    'Outdoor Endurance Run / Tempo Walk',
-                  ].filter(Boolean),
-                  type: 'Cardio' as const,
-                },
-                {
-                  title: '🏋️ Session 2: Rack & Bench Heavy Strength',
-                  tag: 'Garage Strength',
-                  items: [
-                    equipment.includes('bench') && equipment.includes('barbell') && 'NordicTrack Bench Press (Flat/Incline 4x8)',
-                    equipment.includes('barbell') && 'Titan Rack Barbell Squats (4x8)',
-                    equipment.includes('dumbbells') && 'Dumbbell Rows & Overhead Presses (3x10)',
-                  ].filter(Boolean),
-                  type: 'Strength' as const,
-                },
-              ] : [
-                {
-                  title: '🟣 PF Session 1: Cable Tower & DB Circuit',
-                  tag: 'Planet Fitness',
-                  items: [
-                    'PF Cable Lat Pulldowns & Tricep Pushdowns (4x12)',
-                    'Dumbbell Chest Press & Incline Flyes (4x10)',
-                    'Treadmill Incline Power Walk (20 mins at 12% Incline)',
-                  ],
-                  type: 'Strength' as const,
-                },
-                {
-                  title: '🟣 PF Session 2: Smith Machine Heavy Day',
-                  tag: 'Planet Fitness',
-                  items: [
-                    'Smith Machine Squats or Romanian Deadlifts (4x10)',
-                    'Smith Machine Shoulder Press (3x10)',
-                    'StairMaster Interval Challenge (15 mins)',
-                  ],
-                  type: 'Strength' as const,
-                },
-              ]).map((s, idx) => (
-                <div key={idx} style={{ background: '#0f172a', padding: '16px', borderRadius: '16px', border: '1px solid #334155', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <h3 style={{ fontSize: '14px', fontWeight: 'bold', color: primaryColor, margin: 0 }}>{s.title}</h3>
-                    <span style={{ fontSize: '10px', background: badgeBg, border: `1px solid ${badgeBorder}`, color: primaryColor, padding: '2px 6px', borderRadius: '8px' }}>{s.tag}</span>
-                  </div>
-                  <ul style={{ fontSize: '12px', color: '#cbd5e1', paddingLeft: '16px', margin: 0 }}>
-                    {s.items.map((item, i) => <li key={i}>{item}</li>)}
-                  </ul>
+                <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#94a3b8', display: 'block', marginBottom: '6px' }}>
+                  Select How to Build Your Workout:
+                </label>
+                <div style={{ display: 'flex', gap: '8px' }}>
                   <button
-                    onClick={() => startPlanSession(s.title, s.type)}
-                    style={{ marginTop: 'auto', background: primaryColor, color: '#fff', border: 'none', padding: '8px', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer', fontSize: '12px' }}
+                    onClick={() => setFilterMode('muscle')}
+                    style={{
+                      flex: 1, padding: '8px', borderRadius: '8px', border: `1px solid ${filterMode === 'muscle' ? theme.primary : '#334155'}`,
+                      background: filterMode === 'muscle' ? theme.bgBadge : '#0f172a',
+                      color: filterMode === 'muscle' ? theme.accent : '#cbd5e1', fontWeight: 'bold', fontSize: '12px', cursor: 'pointer',
+                    }}
                   >
-                    Start Session 🚀
+                    💪 Target Muscle Groups
+                  </button>
+                  <button
+                    onClick={() => setFilterMode('equipment')}
+                    style={{
+                      flex: 1, padding: '8px', borderRadius: '8px', border: `1px solid ${filterMode === 'equipment' ? theme.primary : '#334155'}`,
+                      background: filterMode === 'equipment' ? theme.bgBadge : '#0f172a',
+                      color: filterMode === 'equipment' ? theme.accent : '#cbd5e1', fontWeight: 'bold', fontSize: '12px', cursor: 'pointer',
+                    }}
+                  >
+                    🏋️ Available Equipment
                   </button>
                 </div>
-              ))}
-            </div>
-          </main>
-        )}
-
-        {/* LOG WORKOUT TAB */}
-        {activeTab === 'log' && (
-          <main style={{ background: '#1e293b', padding: '20px', borderRadius: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <h2 style={{ fontSize: '18px', fontWeight: 'bold', color: primaryColor, margin: 0 }}>
-              Log Workout for {activeProfile} ({locationMode === 'garage' ? '🏠 Garage' : '🟣 Planet Fitness'})
-            </h2>
-            
-            <form onSubmit={handleSaveWorkout} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <div>
-                <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#cbd5e1', display: 'block', marginBottom: '4px' }}>Workout Title</label>
-                <input
-                  type="text"
-                  placeholder="e.g., Cable Pulldowns or Rack Bench Press"
-                  value={workoutTitle}
-                  onChange={(e) => setWorkoutTitle(e.target.value)}
-                  required
-                  style={{ width: '100%', background: '#0f172a', border: '1px solid #334155', borderRadius: '10px', padding: '10px', color: '#fff', boxSizing: 'border-box' }}
-                />
               </div>
 
-              {exercises.map((ex) => (
-                <div key={ex.id} style={{ display: 'flex', gap: '8px', alignItems: 'center', background: '#0f172a', padding: '8px', borderRadius: '10px' }}>
-                  <input
-                    type="text"
-                    placeholder="Exercise"
-                    value={ex.name}
-                    onChange={(e) => updateExercise(ex.id, 'name', e.target.value)}
-                    style={{ flex: 2, background: '#1e293b', border: '1px solid #334155', borderRadius: '6px', padding: '6px', color: '#fff', fontSize: '12px' }}
-                  />
-                  <input
-                    type="number"
-                    placeholder="Sets"
-                    value={ex.sets || ''}
-                    onChange={(e) => updateExercise(ex.id, 'sets', parseInt(e.target.value) || 0)}
-                    style={{ flex: 1, background: '#1e293b', border: '1px solid #334155', borderRadius: '6px', padding: '6px', color: '#fff', fontSize: '12px', textAlign: 'center' }}
-                  />
-                  <input
-                    type="number"
-                    placeholder="Reps"
-                    value={ex.reps || ''}
-                    onChange={(e) => updateExercise(ex.id, 'reps', parseInt(e.target.value) || 0)}
-                    style={{ flex: 1, background: '#1e293b', border: '1px solid #334155', borderRadius: '6px', padding: '6px', color: '#fff', fontSize: '12px', textAlign: 'center' }}
-                  />
-                  <input
-                    type="number"
-                    placeholder="lbs"
-                    value={ex.weight || ''}
-                    onChange={(e) => updateExercise(ex.id, 'weight', parseFloat(e.target.value) || 0)}
-                    style={{ flex: 1, background: '#1e293b', border: '1px solid #334155', borderRadius: '6px', padding: '6px', color: '#fff', fontSize: '12px', textAlign: 'center' }}
-                  />
-                  <button type="button" onClick={() => removeExercise(ex.id)} style={{ color: '#ef4444', background: 'none', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>✕</button>
-                </div>
-              ))}
-
-              <button type="button" onClick={addExerciseRow} style={{ background: 'none', border: 'none', color: primaryColor, fontWeight: 'bold', fontSize: '12px', cursor: 'pointer', alignSelf: 'flex-start' }}>+ Add Row</button>
-
-              <button type="submit" style={{ background: primaryColor, color: '#fff', border: 'none', padding: '12px', borderRadius: '12px', fontWeight: 'bold', fontSize: '14px', cursor: 'pointer', marginTop: '10px' }}>
-                Save Log Entry 💾
-              </button>
-            </form>
-          </main>
-        )}
-
-        {/* PROGRESS FEED & HISTORY TAB */}
-        {activeTab === 'history' && (
-          <main style={{ background: '#1e293b', padding: '20px', borderRadius: '24px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <h2 style={{ fontSize: '18px', fontWeight: 'bold', color: primaryColor, margin: 0 }}>📊 Progress Feed ({activeProfile})</h2>
-            {combinedHistory.length === 0 ? (
-              <p style={{ fontSize: '12px', color: '#94a3b8' }}>No activity logged yet.</p>
-            ) : (
-              combinedHistory.map((item) => {
-                if (item.feedType === 'workout') {
-                  return (
-                    <div key={item.id} style={{ background: '#0f172a', padding: '12px', borderRadius: '12px', border: '1px solid #334155' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                        <div>
-                          <strong style={{ fontSize: '14px', color: '#fff' }}>🏋️ {item.title}</strong>
-                          <span style={{ fontSize: '10px', background: item.location === 'garage' ? '#0284c7' : '#9333ea', color: '#fff', padding: '2px 6px', borderRadius: '6px', marginLeft: '8px' }}>
-                            {item.location === 'garage' ? 'Garage' : 'PF Gym'}
-                          </span>
-                        </div>
-                        <span style={{ fontSize: '10px', color: '#94a3b8' }}>{item.date}</span>
-                      </div>
-                      <ul style={{ fontSize: '12px', color: '#cbd5e1', paddingLeft: '16px', margin: 0 }}>
-                        {item.exercises.map((e, i) => (
-                          <li key={i}>{e.name}: {e.sets} sets × {e.reps} reps {e.weight ? `@ ${e.weight} lbs` : ''}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  );
-                }
-
-                if (item.feedType === 'walk') {
-                  return (
-                    <div key={item.id} style={{ background: '#0f172a', padding: '12px', borderRadius: '12px', border: '1px solid #38bdf8', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <div>
-                        <strong style={{ fontSize: '14px', color: '#38bdf8' }}>🌅 Morning Walk</strong>
-                        <div style={{ fontSize: '12px', color: '#cbd5e1', marginTop: '2px' }}>
-                          {item.distanceMiles} miles in {item.durationMinutes} mins
-                        </div>
-                        {item.notes && <div style={{ fontSize: '10px', color: '#94a3b8', marginTop: '2px' }}>"{item.notes}"</div>}
-                      </div>
-                      <span style={{ fontSize: '10px', color: '#94a3b8' }}>{item.date}</span>
-                    </div>
-                  );
-                }
-
-                return (
-                  <div key={item.id} style={{ background: '#0f172a', padding: '12px', borderRadius: '12px', border: '1px solid #10b981', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div>
-                      <strong style={{ fontSize: '14px', color: '#10b981' }}>⚖️ Body Weight Entry</strong>
-                      <div style={{ fontSize: '12px', color: '#cbd5e1', marginTop: '2px' }}>
-                        {item.weightLbs} lbs | BMI: {item.bmi}
-                      </div>
-                    </div>
-                    <span style={{ fontSize: '10px', color: '#94a3b8' }}>{item.date}</span>
+              {filterMode === 'muscle' && (
+                <div>
+                  <h4 style={{ fontSize: '13px', fontWeight: 'bold', color: theme.accent, margin: '0 0 6px 0' }}>
+                    Select Body Parts:
+                  </h4>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(110px, 1fr))', gap: '6px' }}>
+                    {[
+                      { id: 'legs', label: '🦵 Legs' },
+                      { id: 'back', label: '🪵 Back' },
+                      { id: 'chest', label: '🛡️ Chest' },
+                      { id: 'shoulders', label: '🦾 Shoulders' },
+                      { id: 'arms', label: '💪 Arms' },
+                      { id: 'core', label: '⚡ Core' },
+                      { id: 'cardio', label: '🫀 Cardio' },
+                    ].map((m) => {
+                      const isSelected = selectedMuscles.includes(m.id as MuscleTarget);
+                      return (
+                        <button
+                          key={m.id}
+                          onClick={() => toggleMuscle(m.id as MuscleTarget)}
+                          style={{
+                            padding: '8px 4px', borderRadius: '8px', textAlign: 'center', fontSize: '11px', fontWeight: 'bold', cursor: 'pointer',
+                            background: isSelected ? theme.primary : '#0f172a',
+                            border: `1px solid ${isSelected ? theme.primary : '#334155'}`,
+                            color: isSelected ? '#0f172a' : '#cbd5e1',
+                          }}
+                        >
+                          {m.label} {isSelected && '✓'}
+                        </button>
+                      );
+                    })}
                   </div>
-                );
-              })
+                </div>
+              )}
+
+              {filterMode === 'equipment' && (
+                <div>
+                  <h4 style={{ fontSize: '13px', fontWeight: 'bold', color: theme.accent, margin: '0 0 6px 0' }}>
+                    Select Available Equipment ({locationMode === 'garage' ? 'Garage' : 'PF'}):
+                  </h4>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '6px' }}>
+                    {availableEquipmentList.map((eq) => {
+                      const isSelected = selectedEquipment.includes(eq);
+                      return (
+                        <button
+                          key={eq}
+                          onClick={() => toggleEquipment(eq)}
+                          style={{
+                            padding: '8px 6px', borderRadius: '8px', textAlign: 'center', fontSize: '11px', fontWeight: 'bold', cursor: 'pointer',
+                            background: isSelected ? theme.primary : '#0f172a',
+                            border: `1px solid ${isSelected ? theme.primary : '#334155'}`,
+                            color: isSelected ? '#0f172a' : '#cbd5e1',
+                          }}
+                        >
+                          ⚙️ {eq} {isSelected && '✓'}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              <div>
+                <h4 style={{ fontSize: '13px', fontWeight: 'bold', color: theme.accent, margin: '0 0 6px 0' }}>
+                  Workout Format / Protocol:
+                </h4>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '6px' }}>
+                  {[
+                    { id: 'standard', label: '🎯 Standard (3x10)' },
+                    { id: 'emom', label: '⏱️ EMOM (Every Min)' },
+                    { id: 'amrap', label: '🔥 AMRAP (Circuit)' },
+                    { id: 'pyramid', label: '📐 Pyramid (12-10-8-6)' },
+                  ].map((f) => (
+                    <button
+                      key={f.id}
+                      onClick={() => setSelectedFormat(f.id as WorkoutFormat)}
+                      style={{
+                        padding: '8px 4px', borderRadius: '8px', textAlign: 'center', fontSize: '11px', fontWeight: 'bold', cursor: 'pointer',
+                        background: selectedFormat === f.id ? theme.bgBadge : '#0f172a',
+                        border: `1px solid ${selectedFormat === f.id ? theme.primary : '#334155'}`,
+                        color: selectedFormat === f.id ? theme.accent : '#cbd5e1',
+                      }}
+                    >
+                      {f.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <button
+                onClick={handleGenerateWorkout}
+                style={{
+                  marginTop: '6px', width: '100%', padding: '12px', borderRadius: '10px', border: 'none', fontWeight: 'bold', fontSize: '13px', cursor: 'pointer',
+                  background: theme.primary, color: '#0f172a',
+                }}
+              >
+                ⚡ Generate {selectedFormat.toUpperCase()} Workout
+              </button>
+            </section>
+
+            {generatedWorkout.length > 0 && (
+              <section style={{ background: '#1e293b', padding: '16px', borderRadius: '20px', border: '1px solid #10b981', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <h3 style={{ fontSize: '14px', fontWeight: 'bold', color: '#10b981', margin: 0 }}>
+                  Generated Routine ({generatedWorkout.length} Exercises):
+                </h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {generatedWorkout.map((item, idx) => (
+                    <div key={idx} style={{ background: '#0f172a', padding: '10px 12px', borderRadius: '8px', border: '1px solid #334155', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div>
+                        <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#f8fafc' }}>{item.name} <span style={{ fontSize: '10px', color: theme.accent, textTransform: 'uppercase' }}>({item.muscleGroup})</span></div>
+                        <div style={{ fontSize: '11px', color: '#10b981', marginTop: '2px' }}>{item.prescription}</div>
+                        <div style={{ fontSize: '10px', color: '#94a3b8', marginTop: '1px' }}>Gear: {item.equipment}</div>
+                      </div>
+                      <button
+                        onClick={() => { setExName(item.name); setActiveTab('workout'); }}
+                        style={{ background: '#334155', border: 'none', color: theme.accent, padding: '6px 10px', borderRadius: '6px', fontSize: '11px', cursor: 'pointer', fontWeight: 'bold' }}
+                      >
+                        + Quick Log
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                <button
+                  onClick={handleStartGeneratedWorkout}
+                  style={{ background: '#10b981', color: '#0f172a', border: 'none', padding: '10px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', fontSize: '12px', marginTop: '6px' }}
+                >
+                  🚀 Load Session into Active Logger
+                </button>
+              </section>
             )}
           </main>
         )}
 
-        {/* GEAR TAB */}
-        {activeTab === 'equipment' && (
-          <main style={{ background: '#1e293b', padding: '20px', borderRadius: '24px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <h2 style={{ fontSize: '18px', fontWeight: 'bold', color: '#f59e0b', margin: 0 }}>Garage Equipment</h2>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '10px' }}>
-              {GARAGE_EQUIPMENT.map((item) => {
-                const isSelected = equipment.includes(item.id);
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => toggleEquipment(item.id)}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '10px',
-                      padding: '12px',
-                      borderRadius: '12px',
-                      border: isSelected ? '1px solid #f59e0b' : '1px solid #334155',
-                      background: isSelected ? 'rgba(245, 158, 11, 0.15)' : '#0f172a',
-                      color: isSelected ? '#fef3c7' : '#64748b',
-                      cursor: 'pointer',
-                      textAlign: 'left'
-                    }}
-                  >
-                    <span style={{ fontSize: '20px' }}>{item.icon}</span>
-                    <span style={{ fontSize: '12px', fontWeight: 'bold' }}>{item.name}</span>
-                  </button>
-                );
-              })}
+        {activeTab === 'workout' && (
+          <main style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div style={{ background: '#1e293b', padding: '12px 16px', borderRadius: '12px', border: '1px solid #334155', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: '13px', fontWeight: 'bold', color: theme.accent }}>
+                Active Routine: {activeRoutineName}
+              </span>
+              <span style={{ fontSize: '11px', background: '#0f172a', padding: '4px 8px', borderRadius: '6px', color: '#94a3b8' }}>
+                {locationMode === 'garage' ? '🏠 Garage' : '🏋️ Planet Fitness'}
+              </span>
             </div>
+
+            <section style={{ background: '#1e293b', padding: '16px', borderRadius: '20px', border: '1px solid #334155', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <h3 style={{ fontSize: '14px', fontWeight: 'bold', color: '#fff', margin: 0 }}>Log Exercise Set ({activeProfile})</h3>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '8px' }}>
+                <input
+                  type="text"
+                  placeholder="Exercise Name"
+                  value={exName}
+                  onChange={(e) => setExName(e.target.value)}
+                  style={{ background: '#0f172a', border: '1px solid #334155', borderRadius: '8px', padding: '8px', color: '#fff', fontSize: '12px' }}
+                />
+                <input
+                  type="number"
+                  placeholder="Weight (lbs)"
+                  value={exWeight}
+                  onChange={(e) => setExWeight(e.target.value)}
+                  style={{ background: '#0f172a', border: '1px solid #334155', borderRadius: '8px', padding: '8px', color: '#fff', fontSize: '12px' }}
+                />
+                <input
+                  type="number"
+                  placeholder="Reps Completed"
+                  value={exReps}
+                  onChange={(e) => setExReps(e.target.value)}
+                  style={{ background: '#0f172a', border: '1px solid #334155', borderRadius: '8px', padding: '8px', color: '#fff', fontSize: '12px' }}
+                />
+                {locationMode === 'planet_fitness' && (
+                  <input
+                    type="text"
+                    placeholder="Seat/Pin Setting"
+                    value={exSeat}
+                    onChange={(e) => setExSeat(e.target.value)}
+                    style={{ background: '#0f172a', border: '1px solid #a855f7', borderRadius: '8px', padding: '8px', color: '#fff', fontSize: '12px' }}
+                  />
+                )}
+              </div>
+
+              <button
+                onClick={handleAddSet}
+                style={{ background: theme.primary, color: '#0f172a', border: 'none', padding: '8px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', fontSize: '12px' }}
+              >
+                + Add Set
+              </button>
+
+              {currentSessionSets.length > 0 && (
+                <div style={{ marginTop: '8px', background: '#0f172a', padding: '12px', borderRadius: '12px', border: '1px solid #334155', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <div style={{ fontSize: '12px', fontWeight: 'bold', color: theme.accent }}>Staged Sets:</div>
+                  {currentSessionSets.map((s, idx) => (
+                    <div key={s.id} style={{ fontSize: '12px', color: '#cbd5e1', display: 'flex', justifyContent: 'space-between' }}>
+                      <span>#{idx + 1} {s.exerciseName} - {s.weightLbs} lbs x {s.reps} reps</span>
+                      {s.seatSetting && <span style={{ color: '#c084fc' }}>[Seat: {s.seatSetting}]</span>}
+                    </div>
+                  ))}
+                  <button
+                    onClick={handleSaveWorkout}
+                    style={{ marginTop: '8px', background: '#10b981', color: '#0f172a', border: 'none', padding: '10px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', fontSize: '13px' }}
+                  >
+                    💾 Save Workout Session
+                  </button>
+                </div>
+              )}
+            </section>
           </main>
+        )}
+
+        {activeTab === 'cardio' && (
+          <section style={{ background: '#1e293b', padding: '20px', borderRadius: '20px', border: '1px solid #334155' }}>
+            <h3 style={{ fontSize: '16px', fontWeight: 'bold', color: theme.accent, margin: '0 0 12px 0' }}>🏃 Log Cardio ({activeProfile})</h3>
+            <form onSubmit={handleAddCardio} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '10px', alignItems: 'end' }}>
+              <div>
+                <label style={{ fontSize: '10px', color: '#94a3b8', display: 'block', marginBottom: '2px' }}>Activity</label>
+                <select value={cardioType} onChange={(e) => setCardioType(e.target.value as any)} style={{ width: '100%', background: '#0f172a', border: '1px solid #334155', padding: '8px', borderRadius: '8px', color: '#fff', fontSize: '12px' }}>
+                  <option value="Run">Run</option>
+                  <option value="Walk">Walk</option>
+                  <option value="Rower">Rower</option>
+                  <option value="AirBike">AirBike</option>
+                  <option value="Elliptical">Elliptical</option>
+                  <option value="StairMaster">StairMaster</option>
+                </select>
+              </div>
+              <div>
+                <label style={{ fontSize: '10px', color: '#94a3b8', display: 'block', marginBottom: '2px' }}>Distance (Miles)</label>
+                <input type="number" step="0.01" value={cardioDist} onChange={(e) => setCardioDist(e.target.value)} style={{ width: '100%', background: '#0f172a', border: '1px solid #334155', padding: '8px', borderRadius: '8px', color: '#fff', fontSize: '12px', boxSizing: 'border-box' }} />
+              </div>
+              <div>
+                <label style={{ fontSize: '10px', color: '#94a3b8', display: 'block', marginBottom: '2px' }}>Time (Mins)</label>
+                <input type="number" value={cardioTime} onChange={(e) => setCardioTime(e.target.value)} style={{ width: '100%', background: '#0f172a', border: '1px solid #334155', padding: '8px', borderRadius: '8px', color: '#fff', fontSize: '12px', boxSizing: 'border-box' }} />
+              </div>
+              <div>
+                <label style={{ fontSize: '10px', color: '#94a3b8', display: 'block', marginBottom: '2px' }}>Notes</label>
+                <input type="text" placeholder="Morning walk/run" value={cardioNotes} onChange={(e) => setCardioNotes(e.target.value)} style={{ width: '100%', background: '#0f172a', border: '1px solid #334155', padding: '8px', borderRadius: '8px', color: '#fff', fontSize: '12px', boxSizing: 'border-box' }} />
+              </div>
+              <button type="submit" style={{ background: theme.primary, color: '#0f172a', border: 'none', padding: '9px', borderRadius: '8px', fontWeight: 'bold', fontSize: '12px', cursor: 'pointer' }}>
+                Save Cardio
+              </button>
+            </form>
+          </section>
+        )}
+
+        {activeTab === 'metrics' && (
+          <section style={{ background: '#1e293b', padding: '20px', borderRadius: '20px', border: '1px solid #334155', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <h3 style={{ fontSize: '16px', fontWeight: 'bold', color: theme.accent, margin: 0 }}>⚖️ Weight & BMI ({activeProfile})</h3>
+            {latestMetrics && (
+              <div style={{ background: '#0f172a', padding: '12px', borderRadius: '12px', border: `1px solid ${theme.border}`, display: 'flex', justifyContent: 'space-around' }}>
+                <div>
+                  <div style={{ fontSize: '10px', color: '#94a3b8' }}>Latest Weight</div>
+                  <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#fff' }}>{latestMetrics.weightLbs} lbs</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: '10px', color: '#94a3b8' }}>BMI</div>
+                  <div style={{ fontSize: '20px', fontWeight: 'bold', color: theme.accent }}>
+                    {((latestMetrics.weightLbs / (latestMetrics.heightInches * latestMetrics.heightInches)) * 703).toFixed(1)}
+                  </div>
+                </div>
+              </div>
+            )}
+            <form onSubmit={handleAddMetrics} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', alignItems: 'end' }}>
+              <div>
+                <label style={{ fontSize: '10px', color: '#94a3b8', display: 'block', marginBottom: '2px' }}>Weight (lbs)</label>
+                <input type="number" step="0.1" value={weightInput} onChange={(e) => setWeightInput(e.target.value)} style={{ width: '100%', background: '#0f172a', border: '1px solid #334155', padding: '8px', borderRadius: '8px', color: '#fff', fontSize: '12px', boxSizing: 'border-box' }} />
+              </div>
+              <div>
+                <label style={{ fontSize: '10px', color: '#94a3b8', display: 'block', marginBottom: '2px' }}>Height (Inches)</label>
+                <input type="number" value={heightInput} onChange={(e) => setHeightInput(e.target.value)} style={{ width: '100%', background: '#0f172a', border: '1px solid #334155', padding: '8px', borderRadius: '8px', color: '#fff', fontSize: '12px', boxSizing: 'border-box' }} />
+              </div>
+              <button type="submit" style={{ background: theme.primary, color: '#0f172a', border: 'none', padding: '9px', borderRadius: '8px', fontWeight: 'bold', fontSize: '12px', cursor: 'pointer' }}>
+                Log Weight
+              </button>
+            </form>
+          </section>
+        )}
+
+        {activeTab === 'history' && (
+          <section style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <h3 style={{ fontSize: '14px', fontWeight: 'bold', color: '#94a3b8', margin: 0 }}>Log History ({activeProfile})</h3>
+            {strengthLogs.filter(s => s.profile === activeProfile).map((s) => (
+              <div key={s.id} style={{ background: '#1e293b', padding: '12px', borderRadius: '12px', border: `1px solid ${theme.border}` }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', fontWeight: 'bold', color: theme.accent }}>
+                  <span>🏋️ {s.routineName}</span>
+                  <span style={{ color: '#94a3b8' }}>{s.date}</span>
+                </div>
+                <div style={{ marginTop: '6px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  {s.sets.map((set) => (
+                    <div key={set.id} style={{ fontSize: '11px', color: '#cbd5e1' }}>
+                      • {set.exerciseName}: {set.weightLbs} lbs x {set.reps} reps {set.seatSetting && `[Seat: ${set.seatSetting}]`}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+            {cardioLogs.filter(c => c.profile === activeProfile).map((c) => (
+              <div key={c.id} style={{ background: '#1e293b', padding: '12px', borderRadius: '12px', border: '1px solid #334155', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#fff' }}>🏃 {c.type} - {c.distanceMiles} mi</div>
+                  <div style={{ fontSize: '10px', color: '#94a3b8' }}>{c.date} {c.notes && `• ${c.notes}`}</div>
+                </div>
+                <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#10b981' }}>{c.durationMinutes} mins</div>
+              </div>
+            ))}
+          </section>
         )}
 
       </div>
