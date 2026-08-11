@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 
 type Profile = 'Roxanne' | 'Diana';
+type LocationMode = 'garage' | 'planet_fitness';
 
 interface ExerciseLog {
   id: string;
@@ -13,6 +14,7 @@ interface ExerciseLog {
 interface WorkoutLog {
   id: string;
   profile: Profile;
+  location: LocationMode;
   date: string;
   type: 'Strength' | 'Cardio' | 'Conditioning' | 'Mixed';
   title: string;
@@ -35,7 +37,16 @@ interface BodyMetricLog {
   notes?: string;
 }
 
-const DEFAULT_EQUIPMENT = [
+interface MorningWalkLog {
+  id: string;
+  profile: Profile;
+  date: string;
+  distanceMiles: number;
+  durationMinutes: number;
+  notes?: string;
+}
+
+const GARAGE_EQUIPMENT = [
   { id: 'rack', name: 'Titan Power Rack (Landmine & Pulley)', icon: '🏗️' },
   { id: 'bench', name: 'NordicTrack Adjustable Bench', icon: '🏋️‍♂️' },
   { id: 'barbell', name: 'Olympic Barbells & Bumper Plates', icon: '🏋️' },
@@ -51,11 +62,12 @@ const DEFAULT_EQUIPMENT = [
 
 export default function App() {
   const [activeProfile, setActiveProfile] = useState<Profile>('Roxanne');
+  const [locationMode, setLocationMode] = useState<LocationMode>('garage');
   const [activeTab, setActiveTab] = useState<'plan' | 'log' | 'metrics' | 'history' | 'equipment'>('plan');
 
   const isRoxanne = activeProfile === 'Roxanne';
 
-  // Dynamic Visual Styles
+  // Dynamic Theme Colors
   const primaryColor = isRoxanne ? '#ea580c' : '#8b5cf6';
   const primaryGradient = isRoxanne 
     ? 'linear-gradient(135deg, #d97706, #ea580c, #dc2626)' 
@@ -63,12 +75,10 @@ export default function App() {
   const badgeBg = isRoxanne ? 'rgba(234, 88, 12, 0.2)' : 'rgba(139, 92, 246, 0.2)';
   const badgeBorder = isRoxanne ? '#ea580c' : '#8b5cf6';
 
-  // Equipment & Workout State
+  // Data Persistence State
   const [equipment, setEquipment] = useState<string[]>(() => {
     const saved = localStorage.getItem('duofit_equipment');
-    return saved
-      ? JSON.parse(saved)
-      : ['rack', 'bench', 'barbell', 'dumbbells', 'kettlebell', 'rower', 'airbike', 'cables', 'med_slam_balls', 'plyo_boxes', 'recovery_mat'];
+    return saved ? JSON.parse(saved) : GARAGE_EQUIPMENT.map(e => e.id);
   });
 
   const [workoutLogs, setWorkoutLogs] = useState<WorkoutLog[]>(() => {
@@ -76,42 +86,43 @@ export default function App() {
     return saved ? JSON.parse(saved) : [];
   });
 
-  // Body Metrics State
   const [metricLogs, setMetricLogs] = useState<BodyMetricLog[]>(() => {
     const saved = localStorage.getItem('duofit_metrics');
     return saved ? JSON.parse(saved) : [];
   });
 
+  const [walkLogs, setWalkLogs] = useState<MorningWalkLog[]>(() => {
+    const saved = localStorage.getItem('duofit_walks');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  // Input States
   const [weightInput, setWeightInput] = useState('');
   const [heightFeet, setHeightFeet] = useState('5');
   const [heightInches, setHeightInches] = useState('6');
   const [metricNotes, setMetricNotes] = useState('');
 
-  // Workout Log Form State
+  const [walkDistance, setWalkDistance] = useState('');
+  const [walkDuration, setWalkDuration] = useState('');
+  const [walkNotes, setWalkNotes] = useState('');
+
   const [workoutType, setWorkoutType] = useState<'Strength' | 'Cardio' | 'Conditioning' | 'Mixed'>('Strength');
   const [workoutTitle, setWorkoutTitle] = useState('');
-  const [cardioActivity, setCardioActivity] = useState('Concept2 Rower / Outdoor Run');
+  const [cardioActivity, setCardioActivity] = useState('Concept2 Rower / Treadmill');
   const [distance, setDistance] = useState('');
   const [duration, setDuration] = useState('');
   const [exercises, setExercises] = useState<ExerciseLog[]>([
-    { id: '1', name: 'NordicTrack Bench Press', sets: 4, reps: 8, weight: 135 },
+    { id: '1', name: locationMode === 'garage' ? 'NordicTrack Bench Press' : 'PF Smith Machine Press', sets: 4, reps: 8, weight: 135 },
   ]);
   const [notes, setNotes] = useState('');
 
-  // Local Storage Sync
-  useEffect(() => {
-    localStorage.setItem('duofit_equipment', JSON.stringify(equipment));
-  }, [equipment]);
+  // LocalStorage Sync
+  useEffect(() => localStorage.setItem('duofit_equipment', JSON.stringify(equipment)), [equipment]);
+  useEffect(() => localStorage.setItem('duofit_logs', JSON.stringify(workoutLogs)), [workoutLogs]);
+  useEffect(() => localStorage.setItem('duofit_metrics', JSON.stringify(metricLogs)), [metricLogs]);
+  useEffect(() => localStorage.setItem('duofit_walks', JSON.stringify(walkLogs)), [walkLogs]);
 
-  useEffect(() => {
-    localStorage.setItem('duofit_logs', JSON.stringify(workoutLogs));
-  }, [workoutLogs]);
-
-  useEffect(() => {
-    localStorage.setItem('duofit_metrics', JSON.stringify(metricLogs));
-  }, [metricLogs]);
-
-  // BMI Calculation Formula: (Weight in lbs / (Height in inches)^2) * 703
+  // BMI Calculation
   const calculatedInches = (parseInt(heightFeet) || 0) * 12 + (parseInt(heightInches) || 0);
   const numericWeight = parseFloat(weightInput) || 0;
   const liveBmi = (numericWeight > 0 && calculatedInches > 0)
@@ -119,22 +130,15 @@ export default function App() {
     : '0.0';
 
   const toggleEquipment = (id: string) => {
-    setEquipment((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
-    );
+    setEquipment((prev) => prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]);
   };
 
   const addExerciseRow = () => {
-    setExercises([
-      ...exercises,
-      { id: Date.now().toString(), name: '', sets: 3, reps: 10, weight: 0 },
-    ]);
+    setExercises([...exercises, { id: Date.now().toString(), name: '', sets: 3, reps: 10, weight: 0 }]);
   };
 
   const updateExercise = (id: string, field: keyof ExerciseLog, value: any) => {
-    setExercises((prev) =>
-      prev.map((e) => (e.id === id ? { ...e, [field]: value } : e))
-    );
+    setExercises((prev) => prev.map((e) => (e.id === id ? { ...e, [field]: value } : e)));
   };
 
   const removeExercise = (id: string) => {
@@ -148,22 +152,16 @@ export default function App() {
     const newLog: WorkoutLog = {
       id: `log-${Date.now()}`,
       profile: activeProfile,
-      date: new Date().toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-      }),
+      location: locationMode,
+      date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
       type: workoutType,
       title: workoutTitle,
       exercises: workoutType !== 'Cardio' ? exercises : [],
-      cardioDetails:
-        workoutType !== 'Strength'
-          ? {
-              activity: cardioActivity,
-              distanceMiles: parseFloat(distance) || 0,
-              durationMinutes: parseInt(duration) || 0,
-            }
-          : undefined,
+      cardioDetails: workoutType !== 'Strength' ? {
+        activity: cardioActivity,
+        distanceMiles: parseFloat(distance) || 0,
+        durationMinutes: parseInt(duration) || 0,
+      } : undefined,
       notes,
     };
 
@@ -183,11 +181,7 @@ export default function App() {
     const newMetric: BodyMetricLog = {
       id: `metric-${Date.now()}`,
       profile: activeProfile,
-      date: new Date().toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-      }),
+      date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
       weightLbs: numericWeight,
       heightInches: calculatedInches,
       bmi: parseFloat(liveBmi),
@@ -200,6 +194,28 @@ export default function App() {
     alert(`📊 Body metrics logged for ${activeProfile}!`);
   };
 
+  const handleSaveWalk = (e: React.FormEvent) => {
+    e.preventDefault();
+    const dist = parseFloat(walkDistance);
+    const dur = parseInt(walkDuration);
+    if (!dist || !dur) return;
+
+    const newWalk: MorningWalkLog = {
+      id: `walk-${Date.now()}`,
+      profile: activeProfile,
+      date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      distanceMiles: dist,
+      durationMinutes: dur,
+      notes: walkNotes,
+    };
+
+    setWalkLogs([newWalk, ...walkLogs]);
+    setWalkDistance('');
+    setWalkDuration('');
+    setWalkNotes('');
+    alert(`🌅 Morning walk logged for ${activeProfile}!`);
+  };
+
   const startPlanSession = (title: string, type: 'Strength' | 'Cardio' | 'Conditioning' | 'Mixed') => {
     setWorkoutTitle(title);
     setWorkoutType(type);
@@ -208,13 +224,20 @@ export default function App() {
 
   const profileLogs = workoutLogs.filter((log) => log.profile === activeProfile);
   const profileMetrics = metricLogs.filter((m) => m.profile === activeProfile);
+  const profileWalks = walkLogs.filter((w) => w.profile === activeProfile);
 
-  // Weight Change Calculation
   const latestMetric = profileMetrics[0];
   const baselineMetric = profileMetrics[profileMetrics.length - 1];
   const weightDifference = (latestMetric && baselineMetric && profileMetrics.length > 1)
     ? (latestMetric.weightLbs - baselineMetric.weightLbs).toFixed(1)
     : null;
+
+  // Unified Feed Aggregation
+  const combinedHistory = [
+    ...profileLogs.map(l => ({ ...l, feedType: 'workout' as const })),
+    ...profileMetrics.map(m => ({ ...m, feedType: 'metric' as const })),
+    ...profileWalks.map(w => ({ ...w, feedType: 'walk' as const })),
+  ].sort((a, b) => b.id.localeCompare(a.id));
 
   return (
     <div style={{ backgroundColor: '#090d16', minHeight: '100vh', color: '#f1f5f9', fontFamily: 'sans-serif', padding: '16px' }}>
@@ -235,7 +258,7 @@ export default function App() {
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <h1 style={{ fontSize: '26px', fontWeight: '900', color: '#ffffff', margin: 0 }}>DUOFIT TRACKER</h1>
                 <span style={{ fontSize: '11px', background: 'rgba(255,255,255,0.25)', padding: '2px 8px', borderRadius: '12px', fontWeight: 'bold' }}>
-                  Garage Edition
+                  {locationMode === 'garage' ? '🏠 Garage Edition' : '🟣 Planet Fitness Edition'}
                 </span>
               </div>
               <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.9)', marginTop: '4px', margin: 0 }}>
@@ -243,74 +266,111 @@ export default function App() {
               </p>
             </div>
 
-            {/* Profile Switcher */}
-            <div style={{ background: 'rgba(15, 23, 42, 0.7)', padding: '4px', borderRadius: '16px', display: 'flex', gap: '4px' }}>
-              <button
-                onClick={() => setActiveProfile('Roxanne')}
-                style={{
-                  padding: '8px 16px',
-                  borderRadius: '12px',
-                  border: 'none',
-                  fontWeight: 'bold',
-                  fontSize: '12px',
-                  cursor: 'pointer',
-                  background: isRoxanne ? '#ea580c' : 'transparent',
-                  color: '#ffffff',
-                }}
-              >
-                🔥 Roxanne
-              </button>
-              <button
-                onClick={() => setActiveProfile('Diana')}
-                style={{
-                  padding: '8px 16px',
-                  borderRadius: '12px',
-                  border: 'none',
-                  fontWeight: 'bold',
-                  fontSize: '12px',
-                  cursor: 'pointer',
-                  background: !isRoxanne ? '#8b5cf6' : 'transparent',
-                  color: '#ffffff',
-                }}
-              >
-                👑 Diana
-              </button>
+            {/* Profile & Location Switchers */}
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              {/* Location Toggle */}
+              <div style={{ background: 'rgba(15, 23, 42, 0.7)', padding: '4px', borderRadius: '16px', display: 'flex', gap: '4px' }}>
+                <button
+                  onClick={() => setLocationMode('garage')}
+                  style={{
+                    padding: '8px 12px',
+                    borderRadius: '12px',
+                    border: 'none',
+                    fontWeight: 'bold',
+                    fontSize: '11px',
+                    cursor: 'pointer',
+                    background: locationMode === 'garage' ? '#38bdf8' : 'transparent',
+                    color: locationMode === 'garage' ? '#0f172a' : '#ffffff',
+                  }}
+                >
+                  🏠 Garage
+                </button>
+                <button
+                  onClick={() => setLocationMode('planet_fitness')}
+                  style={{
+                    padding: '8px 12px',
+                    borderRadius: '12px',
+                    border: 'none',
+                    fontWeight: 'bold',
+                    fontSize: '11px',
+                    cursor: 'pointer',
+                    background: locationMode === 'planet_fitness' ? '#a855f7' : 'transparent',
+                    color: '#ffffff',
+                  }}
+                >
+                  🟣 PF Gym
+                </button>
+              </div>
+
+              {/* Profile Toggle */}
+              <div style={{ background: 'rgba(15, 23, 42, 0.7)', padding: '4px', borderRadius: '16px', display: 'flex', gap: '4px' }}>
+                <button
+                  onClick={() => setActiveProfile('Roxanne')}
+                  style={{
+                    padding: '8px 12px',
+                    borderRadius: '12px',
+                    border: 'none',
+                    fontWeight: 'bold',
+                    fontSize: '11px',
+                    cursor: 'pointer',
+                    background: isRoxanne ? '#ea580c' : 'transparent',
+                    color: '#ffffff',
+                  }}
+                >
+                  🔥 Roxanne
+                </button>
+                <button
+                  onClick={() => setActiveProfile('Diana')}
+                  style={{
+                    padding: '8px 12px',
+                    borderRadius: '12px',
+                    border: 'none',
+                    fontWeight: 'bold',
+                    fontSize: '11px',
+                    cursor: 'pointer',
+                    background: !isRoxanne ? '#8b5cf6' : 'transparent',
+                    color: '#ffffff',
+                  }}
+                >
+                  👑 Diana
+                </button>
+              </div>
             </div>
           </div>
 
-          {/* Stats Bar */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '8px' }}>
-            <div style={{ background: 'rgba(15, 23, 42, 0.5)', padding: '8px 12px', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
+          {/* Quick Stats Bar */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '8px' }}>
+            <div style={{ background: 'rgba(15, 23, 42, 0.5)', padding: '8px 12px', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', fontSize: '11px' }}>
               <span style={{ color: 'rgba(255,255,255,0.7)' }}>Workouts:</span>
               <strong style={{ color: '#fff' }}>{profileLogs.length}</strong>
             </div>
-            <div style={{ background: 'rgba(15, 23, 42, 0.5)', padding: '8px 12px', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
+            <div style={{ background: 'rgba(15, 23, 42, 0.5)', padding: '8px 12px', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', fontSize: '11px' }}>
+              <span style={{ color: 'rgba(255,255,255,0.7)' }}>Morning Walks:</span>
+              <strong style={{ color: '#fff' }}>{profileWalks.length}</strong>
+            </div>
+            <div style={{ background: 'rgba(15, 23, 42, 0.5)', padding: '8px 12px', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', fontSize: '11px' }}>
               <span style={{ color: 'rgba(255,255,255,0.7)' }}>Latest Weight:</span>
               <strong style={{ color: '#fff' }}>{latestMetric ? `${latestMetric.weightLbs} lbs` : '--'}</strong>
-            </div>
-            <div style={{ background: 'rgba(15, 23, 42, 0.5)', padding: '8px 12px', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
-              <span style={{ color: 'rgba(255,255,255,0.7)' }}>Current BMI:</span>
-              <strong style={{ color: '#fff' }}>{latestMetric ? latestMetric.bmi : '--'}</strong>
             </div>
           </div>
 
           {/* Navigation Bar */}
-          <nav style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'center' }}>
+          <nav style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', justifyContent: 'center' }}>
             {[
               { id: 'plan', label: '📋 Custom Plan' },
               { id: 'log', label: '⚡ Log Workout' },
-              { id: 'metrics', label: '⚖️ Weight & BMI' },
-              { id: 'history', label: `📜 History (${profileLogs.length})` },
+              { id: 'metrics', label: '⚖️ Weight & Walks' },
+              { id: 'history', label: `📊 Progress Feed (${combinedHistory.length})` },
               { id: 'equipment', label: '⚙️ Garage Gear' },
             ].map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
                 style={{
-                  padding: '8px 14px',
+                  padding: '8px 12px',
                   borderRadius: '12px',
                   border: 'none',
-                  fontSize: '12px',
+                  fontSize: '11px',
                   fontWeight: 'bold',
                   cursor: 'pointer',
                   background: activeTab === tab.id ? '#ffffff' : 'rgba(15, 23, 42, 0.6)',
@@ -323,41 +383,87 @@ export default function App() {
           </nav>
         </header>
 
-        {/* BODY METRICS & BMI TRACKER TAB */}
+        {/* METRICS & MORNING WALKS TAB */}
         {activeTab === 'metrics' && (
           <main style={{ background: '#1e293b', padding: '20px', borderRadius: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div style={{ borderBottom: '1px solid #334155', paddingBottom: '12px' }}>
               <h2 style={{ fontSize: '18px', fontWeight: 'bold', color: primaryColor, margin: 0 }}>
-                ⚖️ Weight, BMI & Progress Tracker ({activeProfile})
+                ⚖️ Weight, BMI & Morning Walk Log ({activeProfile})
               </h2>
-              <p style={{ fontSize: '12px', color: '#94a3b8', margin: '4px 0 0 0' }}>Log entries over time to automatically calculate BMI and total weight loss.</p>
             </div>
 
-            {/* Quick Metrics Summary Cards */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '10px' }}>
+            {/* Quick Metrics Cards */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '10px' }}>
               <div style={{ background: '#0f172a', padding: '12px', borderRadius: '12px', border: '1px solid #334155' }}>
                 <span style={{ fontSize: '11px', color: '#94a3b8' }}>Current Weight</span>
-                <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#fff', marginTop: '4px' }}>
+                <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#fff', marginTop: '4px' }}>
                   {latestMetric ? `${latestMetric.weightLbs} lbs` : 'No logs yet'}
                 </div>
               </div>
               <div style={{ background: '#0f172a', padding: '12px', borderRadius: '12px', border: '1px solid #334155' }}>
                 <span style={{ fontSize: '11px', color: '#94a3b8' }}>Auto-Calculated BMI</span>
-                <div style={{ fontSize: '20px', fontWeight: 'bold', color: primaryColor, marginTop: '4px' }}>
+                <div style={{ fontSize: '18px', fontWeight: 'bold', color: primaryColor, marginTop: '4px' }}>
                   {latestMetric ? latestMetric.bmi : 'No logs yet'}
                 </div>
               </div>
               <div style={{ background: '#0f172a', padding: '12px', borderRadius: '12px', border: '1px solid #334155' }}>
-                <span style={{ fontSize: '11px', color: '#94a3b8' }}>Total Change</span>
-                <div style={{ fontSize: '20px', fontWeight: 'bold', color: weightDifference && parseFloat(weightDifference) <= 0 ? '#10b981' : '#ef4444', marginTop: '4px' }}>
+                <span style={{ fontSize: '11px', color: '#94a3b8' }}>Weight Loss Change</span>
+                <div style={{ fontSize: '18px', fontWeight: 'bold', color: weightDifference && parseFloat(weightDifference) <= 0 ? '#10b981' : '#ef4444', marginTop: '4px' }}>
                   {weightDifference ? `${weightDifference} lbs` : 'Log 2+ entries'}
                 </div>
               </div>
             </div>
 
-            {/* Metric Input Form */}
+            {/* Morning Walk Logger */}
+            <form onSubmit={handleSaveWalk} style={{ display: 'flex', flexDirection: 'column', gap: '12px', background: '#0f172a', padding: '16px', borderRadius: '16px', border: '1px solid #38bdf8' }}>
+              <h3 style={{ fontSize: '14px', fontWeight: 'bold', color: '#38bdf8', margin: 0 }}>🌅 Quick Log: Morning Walk</h3>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '10px' }}>
+                <div>
+                  <label style={{ fontSize: '11px', color: '#cbd5e1', display: 'block', marginBottom: '4px' }}>Distance (Miles)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    placeholder="e.g., 3.25"
+                    value={walkDistance}
+                    onChange={(e) => setWalkDistance(e.target.value)}
+                    required
+                    style={{ width: '100%', background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', padding: '8px', color: '#fff', fontSize: '12px', boxSizing: 'border-box' }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '11px', color: '#cbd5e1', display: 'block', marginBottom: '4px' }}>Time (Minutes)</label>
+                  <input
+                    type="number"
+                    placeholder="e.g., 45"
+                    value={walkDuration}
+                    onChange={(e) => setWalkDuration(e.target.value)}
+                    required
+                    style={{ width: '100%', background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', padding: '8px', color: '#fff', fontSize: '12px', boxSizing: 'border-box' }}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label style={{ fontSize: '11px', color: '#cbd5e1', display: 'block', marginBottom: '4px' }}>Notes</label>
+                <input
+                  type="text"
+                  placeholder="e.g., Early 5 AM neighborhood pace walk..."
+                  value={walkNotes}
+                  onChange={(e) => setWalkNotes(e.target.value)}
+                  style={{ width: '100%', background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', padding: '8px', color: '#fff', fontSize: '12px', boxSizing: 'border-box' }}
+                />
+              </div>
+
+              <button type="submit" style={{ background: '#0284c7', color: '#fff', border: 'none', padding: '10px', borderRadius: '10px', fontWeight: 'bold', fontSize: '12px', cursor: 'pointer' }}>
+                Save Morning Walk 🌅
+              </button>
+            </form>
+
+            {/* Weight & BMI Input Form */}
             <form onSubmit={handleSaveMetric} style={{ display: 'flex', flexDirection: 'column', gap: '12px', background: '#0f172a', padding: '16px', borderRadius: '16px', border: '1px solid #334155' }}>
-              <h3 style={{ fontSize: '14px', fontWeight: 'bold', color: '#fff', margin: 0 }}>+ Log New Weight Entry</h3>
+              <h3 style={{ fontSize: '14px', fontWeight: 'bold', color: '#fff', margin: 0 }}>⚖️ Log Weight Entry</h3>
               
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '10px' }}>
                 <div>
@@ -394,7 +500,7 @@ export default function App() {
                 </div>
 
                 <div>
-                  <label style={{ fontSize: '11px', color: '#cbd5e1', display: 'block', marginBottom: '4px' }}>Auto-Calculated BMI</label>
+                  <label style={{ fontSize: '11px', color: '#cbd5e1', display: 'block', marginBottom: '4px' }}>Auto BMI</label>
                   <div style={{ background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', padding: '8px', color: primaryColor, fontWeight: 'bold', fontSize: '12px', textAlign: 'center' }}>
                     {liveBmi}
                   </div>
@@ -402,89 +508,83 @@ export default function App() {
               </div>
 
               <div>
-                <label style={{ fontSize: '11px', color: '#cbd5e1', display: 'block', marginBottom: '4px' }}>Notes (Optional)</label>
+                <label style={{ fontSize: '11px', color: '#cbd5e1', display: 'block', marginBottom: '4px' }}>Notes</label>
                 <input
                   type="text"
-                  placeholder="e.g., Morning weight after outdoor long run..."
+                  placeholder="e.g., Post morning walk..."
                   value={metricNotes}
                   onChange={(e) => setMetricNotes(e.target.value)}
                   style={{ width: '100%', background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', padding: '8px', color: '#fff', fontSize: '12px', boxSizing: 'border-box' }}
                 />
               </div>
 
-              <button type="submit" style={{ background: primaryColor, color: '#fff', border: 'none', padding: '10px', borderRadius: '10px', fontWeight: 'bold', fontSize: '12px', cursor: 'pointer', marginTop: '4px' }}>
+              <button type="submit" style={{ background: primaryColor, color: '#fff', border: 'none', padding: '10px', borderRadius: '10px', fontWeight: 'bold', fontSize: '12px', cursor: 'pointer' }}>
                 Save Body Metrics 📊
               </button>
             </form>
-
-            {/* Metric History List */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <h3 style={{ fontSize: '14px', fontWeight: 'bold', color: '#fff', margin: 0 }}>{activeProfile}'s Weight History</h3>
-              {profileMetrics.length === 0 ? (
-                <p style={{ fontSize: '12px', color: '#94a3b8' }}>No metrics recorded yet. Log your first weight entry above!</p>
-              ) : (
-                profileMetrics.map((m) => (
-                  <div key={m.id} style={{ background: '#0f172a', padding: '12px', borderRadius: '12px', border: '1px solid #334155', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div>
-                      <strong style={{ fontSize: '14px', color: '#fff' }}>{m.weightLbs} lbs</strong>
-                      <span style={{ fontSize: '11px', color: primaryColor, marginLeft: '10px' }}>BMI: {m.bmi}</span>
-                      {m.notes && <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '2px' }}>"{m.notes}"</div>}
-                    </div>
-                    <span style={{ fontSize: '10px', color: '#94a3b8' }}>{m.date}</span>
-                  </div>
-                ))
-              )}
-            </div>
           </main>
         )}
 
         {/* CUSTOM PLAN TAB */}
         {activeTab === 'plan' && (
           <main style={{ background: '#1e293b', padding: '20px', borderRadius: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div style={{ borderBottom: '1px solid #334155', paddingBottom: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <h2 style={{ fontSize: '18px', fontWeight: 'bold', color: primaryColor, margin: 0 }}>
-                  {isRoxanne ? '🔥 Roxanne\'s Tailored Routine' : '👑 Diana\'s Custom Workout Plan'}
-                </h2>
-                <p style={{ fontSize: '12px', color: '#94a3b8', margin: '4px 0 0 0' }}>Generated for your {equipment.length} active garage items.</p>
-              </div>
+            <div style={{ borderBottom: '1px solid #334155', paddingBottom: '12px' }}>
+              <h2 style={{ fontSize: '18px', fontWeight: 'bold', color: primaryColor, margin: 0 }}>
+                {locationMode === 'garage' 
+                  ? `🏠 Garage Edition Plan (${activeProfile})` 
+                  : `🟣 Planet Fitness Plan (${activeProfile})`}
+              </h2>
+              <p style={{ fontSize: '12px', color: '#94a3b8', margin: '4px 0 0 0' }}>
+                {locationMode === 'garage' 
+                  ? 'Tailored for home garage equipment.' 
+                  : 'Tailored for Planet Fitness Smith Machines, Cable Towers & Cardio Decks.'}
+              </p>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '12px' }}>
-              {[
+              {(locationMode === 'garage' ? [
                 {
                   title: '🏃 Session 1: Cardio & Endurance',
-                  tag: 'Aerobic',
+                  tag: 'Garage Cardio',
                   items: [
                     equipment.includes('rower') && 'Concept2 Rower: 500m Interval Sprints (5 sets)',
                     equipment.includes('airbike') && 'Assault AirBike: 20/10 Calorie Intervals (15 mins)',
-                    equipment.includes('plyo_boxes') && 'Jump Rope Warm-up (3x2 mins)',
-                    'Outdoor Long-Distance Run / Endurance Tempo Walk',
+                    'Outdoor Endurance Run / Tempo Walk',
                   ].filter(Boolean),
                   type: 'Cardio' as const,
                 },
                 {
                   title: '🏋️ Session 2: Rack & Bench Heavy Strength',
-                  tag: 'Strength',
+                  tag: 'Garage Strength',
                   items: [
                     equipment.includes('bench') && equipment.includes('barbell') && 'NordicTrack Bench Press (Flat/Incline 4x8)',
-                    equipment.includes('bench') && equipment.includes('dumbbells') && 'Incline Dumbbell Chest Flyes & Rows (3x10)',
-                    equipment.includes('barbell') && 'Titan Rack Barbell Squats or Deadlifts (4x8)',
-                    equipment.includes('rack') && 'Landmine Rotations & Presses (3x10)',
+                    equipment.includes('barbell') && 'Titan Rack Barbell Squats (4x8)',
+                    equipment.includes('dumbbells') && 'Dumbbell Rows & Overhead Presses (3x10)',
                   ].filter(Boolean),
                   type: 'Strength' as const,
                 },
+              ] : [
                 {
-                  title: '💥 Session 3: Full Body Conditioning',
-                  tag: 'Conditioning',
+                  title: '🟣 PF Session 1: Cable Tower & DB Circuit',
+                  tag: 'Planet Fitness',
                   items: [
-                    equipment.includes('med_slam_balls') && 'Medicine Ball Wall Balls or Russian Twists (4x15)',
-                    equipment.includes('kettlebell') && 'Heavy Kettlebell Swings (4x15)',
-                    equipment.includes('plyo_boxes') && 'Plyo Box Step-ups or Jump Squats (3x12)',
-                  ].filter(Boolean),
-                  type: 'Conditioning' as const,
+                    'PF Cable Lat Pulldowns & Tricep Pushdowns (4x12)',
+                    'Dumbbell Chest Press & Incline Flyes (4x10)',
+                    'Treadmill Incline Power Walk (20 mins at 12% Incline)',
+                  ],
+                  type: 'Strength' as const,
                 },
-              ].map((s, idx) => (
+                {
+                  title: '🟣 PF Session 2: Smith Machine Heavy Day',
+                  tag: 'Planet Fitness',
+                  items: [
+                    'Smith Machine Squats or Romanian Deadlifts (4x10)',
+                    'Smith Machine Shoulder Press (3x10)',
+                    'StairMaster Interval Challenge (15 mins)',
+                  ],
+                  type: 'Strength' as const,
+                },
+              ]).map((s, idx) => (
                 <div key={idx} style={{ background: '#0f172a', padding: '16px', borderRadius: '16px', border: '1px solid #334155', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <h3 style={{ fontSize: '14px', fontWeight: 'bold', color: primaryColor, margin: 0 }}>{s.title}</h3>
@@ -508,14 +608,16 @@ export default function App() {
         {/* LOG WORKOUT TAB */}
         {activeTab === 'log' && (
           <main style={{ background: '#1e293b', padding: '20px', borderRadius: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <h2 style={{ fontSize: '18px', fontWeight: 'bold', color: primaryColor, margin: 0 }}>Log Workout for {activeProfile}</h2>
+            <h2 style={{ fontSize: '18px', fontWeight: 'bold', color: primaryColor, margin: 0 }}>
+              Log Workout for {activeProfile} ({locationMode === 'garage' ? '🏠 Garage' : '🟣 Planet Fitness'})
+            </h2>
             
             <form onSubmit={handleSaveWorkout} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <div>
                 <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#cbd5e1', display: 'block', marginBottom: '4px' }}>Workout Title</label>
                 <input
                   type="text"
-                  placeholder="e.g., Garage Bench Press & Rows"
+                  placeholder="e.g., Cable Pulldowns or Rack Bench Press"
                   value={workoutTitle}
                   onChange={(e) => setWorkoutTitle(e.target.value)}
                   required
@@ -523,43 +625,6 @@ export default function App() {
                 />
               </div>
 
-              {/* Cardio Fields */}
-              {workoutType !== 'Strength' && (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '8px', background: '#0f172a', padding: '12px', borderRadius: '10px' }}>
-                  <div>
-                    <label style={{ fontSize: '11px', color: '#cbd5e1', display: 'block' }}>Activity</label>
-                    <input
-                      type="text"
-                      value={cardioActivity}
-                      onChange={(e) => setCardioActivity(e.target.value)}
-                      style={{ width: '100%', background: '#1e293b', border: '1px solid #334155', borderRadius: '6px', padding: '6px', color: '#fff', fontSize: '12px', boxSizing: 'border-box' }}
-                    />
-                  </div>
-                  <div>
-                    <label style={{ fontSize: '11px', color: '#cbd5e1', display: 'block' }}>Distance (Miles)</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      placeholder="3.5"
-                      value={distance}
-                      onChange={(e) => setDistance(e.target.value)}
-                      style={{ width: '100%', background: '#1e293b', border: '1px solid #334155', borderRadius: '6px', padding: '6px', color: '#fff', fontSize: '12px', boxSizing: 'border-box' }}
-                    />
-                  </div>
-                  <div>
-                    <label style={{ fontSize: '11px', color: '#cbd5e1', display: 'block' }}>Duration (Mins)</label>
-                    <input
-                      type="number"
-                      placeholder="45"
-                      value={duration}
-                      onChange={(e) => setDuration(e.target.value)}
-                      style={{ width: '100%', background: '#1e293b', border: '1px solid #334155', borderRadius: '6px', padding: '6px', color: '#fff', fontSize: '12px', boxSizing: 'border-box' }}
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* Exercises */}
               {exercises.map((ex) => (
                 <div key={ex.id} style={{ display: 'flex', gap: '8px', alignItems: 'center', background: '#0f172a', padding: '8px', borderRadius: '10px' }}>
                   <input
@@ -596,17 +661,6 @@ export default function App() {
 
               <button type="button" onClick={addExerciseRow} style={{ background: 'none', border: 'none', color: primaryColor, fontWeight: 'bold', fontSize: '12px', cursor: 'pointer', alignSelf: 'flex-start' }}>+ Add Row</button>
 
-              <div>
-                <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#cbd5e1', display: 'block', marginBottom: '4px' }}>Notes</label>
-                <textarea
-                  rows={2}
-                  placeholder="Notes on bench angle, tempo, or feel..."
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  style={{ width: '100%', background: '#0f172a', border: '1px solid #334155', borderRadius: '10px', padding: '8px', color: '#fff', boxSizing: 'border-box' }}
-                />
-              </div>
-
               <button type="submit" style={{ background: primaryColor, color: '#fff', border: 'none', padding: '12px', borderRadius: '12px', fontWeight: 'bold', fontSize: '14px', cursor: 'pointer', marginTop: '10px' }}>
                 Save Log Entry 💾
               </button>
@@ -614,26 +668,62 @@ export default function App() {
           </main>
         )}
 
-        {/* HISTORY TAB */}
+        {/* PROGRESS FEED & HISTORY TAB */}
         {activeTab === 'history' && (
           <main style={{ background: '#1e293b', padding: '20px', borderRadius: '24px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <h2 style={{ fontSize: '18px', fontWeight: 'bold', color: primaryColor, margin: 0 }}>{activeProfile}'s Logged Sessions</h2>
-            {profileLogs.length === 0 ? (
-              <p style={{ fontSize: '12px', color: '#94a3b8' }}>No workouts saved yet.</p>
+            <h2 style={{ fontSize: '18px', fontWeight: 'bold', color: primaryColor, margin: 0 }}>📊 Progress Feed ({activeProfile})</h2>
+            {combinedHistory.length === 0 ? (
+              <p style={{ fontSize: '12px', color: '#94a3b8' }}>No activity logged yet.</p>
             ) : (
-              profileLogs.map((log) => (
-                <div key={log.id} style={{ background: '#0f172a', padding: '12px', borderRadius: '12px', border: '1px solid #334155' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                    <strong style={{ fontSize: '14px', color: '#fff' }}>{log.title}</strong>
-                    <span style={{ fontSize: '10px', color: '#94a3b8' }}>{log.date}</span>
+              combinedHistory.map((item) => {
+                if (item.feedType === 'workout') {
+                  return (
+                    <div key={item.id} style={{ background: '#0f172a', padding: '12px', borderRadius: '12px', border: '1px solid #334155' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                        <div>
+                          <strong style={{ fontSize: '14px', color: '#fff' }}>🏋️ {item.title}</strong>
+                          <span style={{ fontSize: '10px', background: item.location === 'garage' ? '#0284c7' : '#9333ea', color: '#fff', padding: '2px 6px', borderRadius: '6px', marginLeft: '8px' }}>
+                            {item.location === 'garage' ? 'Garage' : 'PF Gym'}
+                          </span>
+                        </div>
+                        <span style={{ fontSize: '10px', color: '#94a3b8' }}>{item.date}</span>
+                      </div>
+                      <ul style={{ fontSize: '12px', color: '#cbd5e1', paddingLeft: '16px', margin: 0 }}>
+                        {item.exercises.map((e, i) => (
+                          <li key={i}>{e.name}: {e.sets} sets × {e.reps} reps {e.weight ? `@ ${e.weight} lbs` : ''}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  );
+                }
+
+                if (item.feedType === 'walk') {
+                  return (
+                    <div key={item.id} style={{ background: '#0f172a', padding: '12px', borderRadius: '12px', border: '1px solid #38bdf8', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div>
+                        <strong style={{ fontSize: '14px', color: '#38bdf8' }}>🌅 Morning Walk</strong>
+                        <div style={{ fontSize: '12px', color: '#cbd5e1', marginTop: '2px' }}>
+                          {item.distanceMiles} miles in {item.durationMinutes} mins
+                        </div>
+                        {item.notes && <div style={{ fontSize: '10px', color: '#94a3b8', marginTop: '2px' }}>"{item.notes}"</div>}
+                      </div>
+                      <span style={{ fontSize: '10px', color: '#94a3b8' }}>{item.date}</span>
+                    </div>
+                  );
+                }
+
+                return (
+                  <div key={item.id} style={{ background: '#0f172a', padding: '12px', borderRadius: '12px', border: '1px solid #10b981', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <strong style={{ fontSize: '14px', color: '#10b981' }}>⚖️ Body Weight Entry</strong>
+                      <div style={{ fontSize: '12px', color: '#cbd5e1', marginTop: '2px' }}>
+                        {item.weightLbs} lbs | BMI: {item.bmi}
+                      </div>
+                    </div>
+                    <span style={{ fontSize: '10px', color: '#94a3b8' }}>{item.date}</span>
                   </div>
-                  <ul style={{ fontSize: '12px', color: '#cbd5e1', paddingLeft: '16px', margin: 0 }}>
-                    {log.exercises.map((e, i) => (
-                      <li key={i}>{e.name}: {e.sets} sets × {e.reps} reps {e.weight ? `@ ${e.weight} lbs` : ''}</li>
-                    ))}
-                  </ul>
-                </div>
-              ))
+                );
+              })
             )}
           </main>
         )}
@@ -643,7 +733,7 @@ export default function App() {
           <main style={{ background: '#1e293b', padding: '20px', borderRadius: '24px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
             <h2 style={{ fontSize: '18px', fontWeight: 'bold', color: '#f59e0b', margin: 0 }}>Garage Equipment</h2>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '10px' }}>
-              {DEFAULT_EQUIPMENT.map((item) => {
+              {GARAGE_EQUIPMENT.map((item) => {
                 const isSelected = equipment.includes(item.id);
                 return (
                   <button
