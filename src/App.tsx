@@ -108,7 +108,7 @@ export default function App() {
 
   const [workoutType, setWorkoutType] = useState<'Strength' | 'Cardio' | 'Conditioning' | 'Mixed'>('Strength');
   const [workoutTitle, setWorkoutTitle] = useState('');
-  const [cardioActivity, setCardioActivity] = useState('Concept2 Rower / Treadmill');
+  const [cardioActivity,] = useState('Concept2 Rower / Treadmill');
   const [distance, setDistance] = useState('');
   const [duration, setDuration] = useState('');
   const [exercises, setExercises] = useState<ExerciseLog[]>([
