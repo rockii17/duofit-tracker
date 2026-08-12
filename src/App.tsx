@@ -1,3 +1,5 @@
+import React, { useState, useEffect } from 'react';
+
 // --- SUPABASE CONFIGURATION ---
 const SUPABASE_URL = "https://opnyvfzkkjzxyyrvgoeb.supabase.co";
 const SUPABASE_KEY = "sb_publishable_g_ly5yGvBkLzTBW1k-1iLg_9VBZDKny";
