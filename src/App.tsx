@@ -1,4 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { createClient } from '@supabase/supabase-js';
+
+// Initialize Supabase Client
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+const supabase = (supabaseUrl && supabaseAnonKey) ? createClient(supabaseUrl, supabaseAnonKey) : null;
 
 type UserProfile = 'Roxanne' | 'Diana';
 type LocationMode = 'garage' | 'planet_fitness';
@@ -6,11 +12,17 @@ type MuscleTarget = 'legs' | 'back' | 'chest' | 'shoulders' | 'arms' | 'core' | 
 type WorkoutFormat = 'standard' | 'emom' | 'amrap' | 'pyramid';
 type FilterMode = 'muscle' | 'equipment';
 
-interface GeneratedExercise {
+interface ExerciseDef {
   name: string;
   equipment: string;
-  prescription: string;
   muscleGroup: MuscleTarget;
+}
+
+interface GeneratedExercise extends ExerciseDef {
+  prescription: string;
+  sets: number;
+  reps: string;
+  restSeconds: number;
 }
 
 interface StrengthSet {
@@ -53,89 +65,46 @@ const PROFILE_STYLES = {
   Diana: { primary: '#d946ef', accent: '#f0abfc', bgBadge: 'rgba(217, 70, 239, 0.15)', border: '#c026d3' },
 };
 
-const GARAGE_POOL = [
-  // Legs
-  { name: 'Barbell Back Squat', equipment: 'Titan Power Rack & Bumper Plates', muscleGroup: 'legs' as MuscleTarget },
-  { name: 'Goblet Squat', equipment: 'Hex Dumbbells / Kettlebell', muscleGroup: 'legs' as MuscleTarget },
-  { name: 'Landmine Hack Squat', equipment: 'Titan Power Rack (Landmine)', muscleGroup: 'legs' as MuscleTarget },
-  { name: 'Box Jumps / Step-Ups', equipment: '3-in-1 Soft Plyo Box', muscleGroup: 'legs' as MuscleTarget },
-  { name: 'Romanian Deadlift', equipment: 'Barbell & Bumper Plates', muscleGroup: 'legs' as MuscleTarget },
-  
-  // Back
-  { name: 'Barbell Bent-Over Row', equipment: 'Barbell & Bumper Plates', muscleGroup: 'back' as MuscleTarget },
-  { name: 'Cable Pulldown (MAG Handle)', equipment: 'Power Rack Pulley & Cable Attachment', muscleGroup: 'back' as MuscleTarget },
-  { name: 'Landmine Single-Arm Row', equipment: 'Titan Power Rack (Landmine)', muscleGroup: 'back' as MuscleTarget },
-  { name: 'Single-Arm Row', equipment: 'Hex Dumbbells & NordicTrack Bench', muscleGroup: 'back' as MuscleTarget },
-  { name: 'Kettlebell Swings', equipment: 'Kettlebell (Up to 71 lbs)', muscleGroup: 'back' as MuscleTarget },
-
-  // Chest
-  { name: 'Barbell Bench Press', equipment: 'Titan Power Rack & NordicTrack Bench', muscleGroup: 'chest' as MuscleTarget },
-  { name: 'Incline Dumbbell Press', equipment: 'Hex Dumbbells & NordicTrack Bench', muscleGroup: 'chest' as MuscleTarget },
-  { name: 'Landmine Chest Press', equipment: 'Titan Power Rack (Landmine)', muscleGroup: 'chest' as MuscleTarget },
-  { name: 'Cable Chest Flyes', equipment: 'Power Rack Pulley & Cable Attachment', muscleGroup: 'chest' as MuscleTarget },
-
-  // Shoulders
-  { name: 'Overhead Barbell Press', equipment: 'Titan Power Rack & Barbell', muscleGroup: 'shoulders' as MuscleTarget },
-  { name: 'Dumbbell Lateral Raise', equipment: 'Hex Dumbbells', muscleGroup: 'shoulders' as MuscleTarget },
-  { name: 'Landmine Shoulder Press', equipment: 'Titan Power Rack (Landmine)', muscleGroup: 'shoulders' as MuscleTarget },
-  { name: 'Cable Face Pulls', equipment: 'Power Rack Pulley & Cable Attachment', muscleGroup: 'shoulders' as MuscleTarget },
-
-  // Arms
-  { name: 'Cable Tricep Pushdown', equipment: 'Power Rack Pulley & Cable Attachment', muscleGroup: 'arms' as MuscleTarget },
-  { name: 'Dumbbell Bicep Curls', equipment: 'Hex Dumbbells', muscleGroup: 'arms' as MuscleTarget },
-  { name: 'Tricep Bench Dips', equipment: 'NordicTrack Bench', muscleGroup: 'arms' as MuscleTarget },
-  { name: 'Band Hammer Curls', equipment: 'Resistance Bands', muscleGroup: 'arms' as MuscleTarget },
-
-  // Core & Conditioning
-  { name: 'Slam Ball Overheads', equipment: 'Medicine & Slam Balls', muscleGroup: 'core' as MuscleTarget },
-  { name: 'Landmine Rotations', equipment: 'Titan Power Rack (Landmine)', muscleGroup: 'core' as MuscleTarget },
-  { name: 'Battle Rope Waves', equipment: 'Battle Ropes', muscleGroup: 'cardio' as MuscleTarget },
-  { name: 'Concept2 Rower Intervals', equipment: 'Concept2 Rower', muscleGroup: 'cardio' as MuscleTarget },
-  { name: 'Assault Bike Sprint Intervals', equipment: 'Assault AirBike', muscleGroup: 'cardio' as MuscleTarget },
+const GARAGE_POOL: ExerciseDef[] = [
+  { name: 'Barbell Back Squat', equipment: 'Titan Power Rack & Bumper Plates', muscleGroup: 'legs' },
+  { name: 'Goblet Squat', equipment: 'Hex Dumbbells / Kettlebell', muscleGroup: 'legs' },
+  { name: 'Landmine Hack Squat', equipment: 'Titan Power Rack (Landmine)', muscleGroup: 'legs' },
+  { name: 'Box Jumps / Step-Ups', equipment: '3-in-1 Soft Plyo Box', muscleGroup: 'legs' },
+  { name: 'Romanian Deadlift', equipment: 'Barbell & Bumper Plates', muscleGroup: 'legs' },
+  { name: 'Barbell Bent-Over Row', equipment: 'Barbell & Bumper Plates', muscleGroup: 'back' },
+  { name: 'Cable Pulldown (MAG Handle)', equipment: 'Power Rack Pulley & Cable Attachment', muscleGroup: 'back' },
+  { name: 'Landmine Single-Arm Row', equipment: 'Titan Power Rack (Landmine)', muscleGroup: 'back' },
+  { name: 'Single-Arm Row', equipment: 'Hex Dumbbells & NordicTrack Bench', muscleGroup: 'back' },
+  { name: 'Kettlebell Swings', equipment: 'Kettlebell (Up to 71 lbs)', muscleGroup: 'back' },
+  { name: 'Barbell Bench Press', equipment: 'Titan Power Rack & NordicTrack Bench', muscleGroup: 'chest' },
+  { name: 'Incline Dumbbell Press', equipment: 'Hex Dumbbells & NordicTrack Bench', muscleGroup: 'chest' },
+  { name: 'Landmine Chest Press', equipment: 'Titan Power Rack (Landmine)', muscleGroup: 'chest' },
+  { name: 'Cable Chest Flyes', equipment: 'Power Rack Pulley & Cable Attachment', muscleGroup: 'chest' },
+  { name: 'Overhead Barbell Press', equipment: 'Titan Power Rack & Barbell', muscleGroup: 'shoulders' },
+  { name: 'Dumbbell Lateral Raise', equipment: 'Hex Dumbbells', muscleGroup: 'shoulders' },
+  { name: 'Landmine Shoulder Press', equipment: 'Titan Power Rack (Landmine)', muscleGroup: 'shoulders' },
+  { name: 'Cable Face Pulls', equipment: 'Power Rack Pulley & Cable Attachment', muscleGroup: 'shoulders' },
+  { name: 'Cable Tricep Pushdown', equipment: 'Power Rack Pulley & Cable Attachment', muscleGroup: 'arms' },
+  { name: 'Dumbbell Bicep Curls', equipment: 'Hex Dumbbells', muscleGroup: 'arms' },
+  { name: 'Tricep Bench Dips', equipment: 'NordicTrack Bench', muscleGroup: 'arms' },
+  { name: 'Slam Ball Overheads', equipment: 'Medicine & Slam Balls', muscleGroup: 'core' },
+  { name: 'Battle Rope Waves', equipment: 'Battle Ropes', muscleGroup: 'cardio' },
 ];
 
-const PLANET_FITNESS_POOL = [
-  // Cardio Equipment
-  { name: 'Treadmill Run / Walk', equipment: 'Treadmills', muscleGroup: 'cardio' as MuscleTarget },
-  { name: 'Elliptical Glider', equipment: 'Ellipticals', muscleGroup: 'cardio' as MuscleTarget },
-  { name: 'Arc Trainer Strides', equipment: 'Arc Trainers', muscleGroup: 'cardio' as MuscleTarget },
-  { name: 'Stationary Bike (Upright / Recumbent)', equipment: 'Stationary Bikes (Upright and Recumbent)', muscleGroup: 'cardio' as MuscleTarget },
-  { name: 'Stair Climber / Stepmill', equipment: 'Stair Climbers / Stepmills', muscleGroup: 'cardio' as MuscleTarget },
-  { name: 'PF Rowing Machine', equipment: 'Rowing Machines', muscleGroup: 'cardio' as MuscleTarget },
-  { name: 'Recumbent Stepper Intervals', equipment: 'Recumbent Steppers', muscleGroup: 'cardio' as MuscleTarget },
-  { name: 'Upper Body Ergometer (Arm Bike)', equipment: 'Upper Body Ergometers (Arm Bikes)', muscleGroup: 'cardio' as MuscleTarget },
-
-  // Selectorized Strength Machines
-  { name: 'Machine Chest Press', equipment: 'Chest Press Machine', muscleGroup: 'chest' as MuscleTarget },
-  { name: 'Pectoral Fly / Reverse Fly', equipment: 'Pectoral Fly / Reverse Fly Machine', muscleGroup: 'chest' as MuscleTarget },
-  { name: 'Machine Lat Pulldown', equipment: 'Lat Pulldown Machine', muscleGroup: 'back' as MuscleTarget },
-  { name: 'Seated Cable Row', equipment: 'Seated Row Machine', muscleGroup: 'back' as MuscleTarget },
-  { name: 'Seated Shoulder Press', equipment: 'Shoulder Press Machine', muscleGroup: 'shoulders' as MuscleTarget },
-  { name: 'Machine Lateral Raise', equipment: 'Lateral Raise Machine', muscleGroup: 'shoulders' as MuscleTarget },
-  { name: 'Machine Rear Deltoid Fly', equipment: 'Rear Deltoid Machine', muscleGroup: 'shoulders' as MuscleTarget },
-  { name: 'Machine Bicep Curl', equipment: 'Bicep Curl Machine', muscleGroup: 'arms' as MuscleTarget },
-  { name: 'Tricep Extension / Tricep Press', equipment: 'Tricep Extension / Tricep Press Machine', muscleGroup: 'arms' as MuscleTarget },
-
-  { name: 'Seated Leg Press', equipment: 'Seated Leg Press Machine', muscleGroup: 'legs' as MuscleTarget },
-  { name: 'Seated Leg Extension', equipment: 'Leg Extension Machine', muscleGroup: 'legs' as MuscleTarget },
-  { name: 'Lying or Seated Leg Curl', equipment: 'Lying or Seated Leg Curl Machine', muscleGroup: 'legs' as MuscleTarget },
-  { name: 'Calf Extension Machine', equipment: 'Calf Extension Machine', muscleGroup: 'legs' as MuscleTarget },
-  { name: 'Hip Adduction and Abduction', equipment: 'Hip Adduction and Abduction Machine', muscleGroup: 'legs' as MuscleTarget },
-  { name: 'Glute Kickback Machine', equipment: 'Glute Machine', muscleGroup: 'legs' as MuscleTarget },
-
-  { name: 'Abdominal Crunch Machine', equipment: 'Abdominal Crunch Machine', muscleGroup: 'core' as MuscleTarget },
-  { name: 'Machine Back Extension', equipment: 'Back Extension Machine', muscleGroup: 'back' as MuscleTarget },
-  { name: 'Torso Rotation Machine', equipment: 'Torso Rotation Machine', muscleGroup: 'core' as MuscleTarget },
-
-  // Free Weights & Cable Systems
-  { name: 'Smith Machine Squat / Bench', equipment: 'Smith Machines', muscleGroup: 'legs' as MuscleTarget },
-  { name: 'Dual Cable Pulley Crossovers / Face Pulls', equipment: 'Dual Adjustable Cable Pulleys & Cable Towers', muscleGroup: 'chest' as MuscleTarget },
-  { name: 'Assisted Pull-Up and Dip', equipment: 'Assisted Pull-Up and Dip Machine', muscleGroup: 'back' as MuscleTarget },
-  { name: 'Dumbbell & Fixed Barbell Moves', equipment: 'Dumbbells & Fixed Barbells', muscleGroup: 'arms' as MuscleTarget },
-
-  // Circuit & Mobility Accessories
-  { name: '30-Minute Express Station Rotation', equipment: '30-Minute Express Circuit Stations', muscleGroup: 'cardio' as MuscleTarget },
-  { name: 'TRX / Medicine Ball / Kettlebell Mobility Work', equipment: 'Stretch/Mobility Accessories', muscleGroup: 'core' as MuscleTarget },
+const PLANET_FITNESS_POOL: ExerciseDef[] = [
+  { name: 'Machine Chest Press', equipment: 'Chest Press Machine', muscleGroup: 'chest' },
+  { name: 'Pectoral Fly / Reverse Fly', equipment: 'Pectoral Fly / Reverse Fly Machine', muscleGroup: 'chest' },
+  { name: 'Machine Lat Pulldown', equipment: 'Lat Pulldown Machine', muscleGroup: 'back' },
+  { name: 'Seated Cable Row', equipment: 'Seated Row Machine', muscleGroup: 'back' },
+  { name: 'Seated Shoulder Press', equipment: 'Shoulder Press Machine', muscleGroup: 'shoulders' },
+  { name: 'Machine Lateral Raise', equipment: 'Lateral Raise Machine', muscleGroup: 'shoulders' },
+  { name: 'Machine Bicep Curl', equipment: 'Bicep Curl Machine', muscleGroup: 'arms' },
+  { name: 'Tricep Extension / Tricep Press', equipment: 'Tricep Extension / Tricep Press Machine', muscleGroup: 'arms' },
+  { name: 'Seated Leg Press', equipment: 'Seated Leg Press Machine', muscleGroup: 'legs' },
+  { name: 'Seated Leg Extension', equipment: 'Leg Extension Machine', muscleGroup: 'legs' },
+  { name: 'Lying or Seated Leg Curl', equipment: 'Lying or Seated Leg Curl Machine', muscleGroup: 'legs' },
+  { name: 'Abdominal Crunch Machine', equipment: 'Abdominal Crunch Machine', muscleGroup: 'core' },
+  { name: 'Treadmill Run / Walk', equipment: 'Treadmills', muscleGroup: 'cardio' },
 ];
 
 export default function App() {
@@ -154,10 +123,42 @@ export default function App() {
   const [metricsLogs, setMetricsLogs] = useState<BodyMetrics[]>(() => JSON.parse(localStorage.getItem('duofit_metrics') || '[]'));
   const [cardioLogs, setCardioLogs] = useState<CardioLog[]>(() => JSON.parse(localStorage.getItem('duofit_cardio') || '[]'));
   const [strengthLogs, setStrengthLogs] = useState<StrengthLog[]>(() => JSON.parse(localStorage.getItem('duofit_strength') || '[]'));
+  const [editingLogId, setEditingLogId] = useState<string | null>(null);
 
   useEffect(() => localStorage.setItem('duofit_metrics', JSON.stringify(metricsLogs)), [metricsLogs]);
   useEffect(() => localStorage.setItem('duofit_cardio', JSON.stringify(cardioLogs)), [cardioLogs]);
   useEffect(() => localStorage.setItem('duofit_strength', JSON.stringify(strengthLogs)), [strengthLogs]);
+
+  // Live Supabase Sync
+  useEffect(() => {
+    if (!supabase) return;
+
+    const fetchLogs = async () => {
+      const { data } = await supabase.from('workout_logs').select('*');
+      if (data && data.length > 0) {
+        const formatted: StrengthLog[] = data.map((d) => ({
+          id: d.id,
+          date: new Date(d.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+          profile: d.profile as UserProfile,
+          location: d.location as LocationMode,
+          routineName: d.routine_name,
+          sets: d.sets,
+        }));
+        setStrengthLogs(formatted);
+      }
+    };
+
+    fetchLogs();
+
+    const channel = supabase
+      .channel('workout_logs_changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'workout_logs' }, () => {
+        fetchLogs();
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, []);
 
   const [activeRoutineName, setActiveRoutineName] = useState('Custom Workout');
   const [exName, setExName] = useState('');
@@ -176,50 +177,65 @@ export default function App() {
   const currentPool = locationMode === 'garage' ? GARAGE_POOL : PLANET_FITNESS_POOL;
   const availableEquipmentList = Array.from(new Set(currentPool.map((item) => item.equipment)));
 
-  const toggleMuscle = (muscle: MuscleTarget) => {
-    setSelectedMuscles((prev) =>
-      prev.includes(muscle) ? prev.filter((m) => m !== muscle) : [...prev, muscle]
-    );
+  const toggleMuscle = (m: MuscleTarget) => {
+    setSelectedMuscles((prev) => prev.includes(m) ? prev.filter((item) => item !== m) : [...prev, m]);
   };
 
   const toggleEquipment = (eq: string) => {
-    setSelectedEquipment((prev) =>
-      prev.includes(eq) ? prev.filter((e) => e !== eq) : [...prev, eq]
-    );
+    setSelectedEquipment((prev) => prev.includes(eq) ? prev.filter((e) => e !== eq) : [...prev, eq]);
   };
 
-  const formatPrescription = (format: WorkoutFormat): string => {
+  const getPrescriptionDetails = (format: WorkoutFormat) => {
     switch (format) {
-      case 'emom': return '⏱️ EMOM: 8-10 reps at start of every min (10 mins)';
-      case 'amrap': return '🔥 AMRAP: 12 reps per exercise in a 12-min circuit';
-      case 'pyramid': return '📐 Pyramid: 12 reps, 10 reps, 8 reps, 6 reps (increase weight)';
-      case 'standard': default: return '🎯 Standard: 3 sets x 10-12 reps (60s rest)';
+      case 'emom': return { sets: 4, reps: '8-10', restSeconds: 60, prescription: '⏱️ EMOM (4 sets x 8-10 reps, 60s rest)' };
+      case 'amrap': return { sets: 3, reps: '12', restSeconds: 45, prescription: '🔥 AMRAP (3 sets x 12 reps, 45s rest)' };
+      case 'pyramid': return { sets: 4, reps: '12-10-8-6', restSeconds: 90, prescription: '📐 Pyramid (4 sets x 12-10-8-6 reps, 90s rest)' };
+      case 'standard': default: return { sets: 3, reps: '10-12', restSeconds: 60, prescription: '🎯 Standard (3 sets x 10-12 reps, 60s rest)' };
     }
   };
 
   const handleGenerateWorkout = () => {
-    let matches = [];
-
+    let eligiblePool = [];
     if (filterMode === 'muscle') {
       if (selectedMuscles.length === 0) return;
-      matches = currentPool.filter((item) => selectedMuscles.includes(item.muscleGroup));
+      eligiblePool = currentPool.filter((item) => selectedMuscles.includes(item.muscleGroup));
     } else {
       if (selectedEquipment.length === 0) return;
-      matches = currentPool.filter((item) => selectedEquipment.includes(item.equipment));
+      eligiblePool = currentPool.filter((item) => selectedEquipment.includes(item.equipment));
     }
 
-    const compiled: GeneratedExercise[] = matches.map((item) => ({
+    const shuffled = [...eligiblePool].sort(() => 0.5 - Math.random());
+    const count = Math.min(Math.max(3, Math.floor(Math.random() * 3) + 3), shuffled.length);
+    const selected = shuffled.slice(0, count);
+
+    const meta = getPrescriptionDetails(selectedFormat);
+    const compiled: GeneratedExercise[] = selected.map((item) => ({
       ...item,
-      prescription: formatPrescription(selectedFormat),
+      ...meta,
     }));
 
     setGeneratedWorkout(compiled);
   };
 
+  const handleSwapExercise = (indexToSwap: number) => {
+    const current = generatedWorkout[indexToSwap];
+    const poolForSwap = currentPool.filter(
+      (item) => item.muscleGroup === current.muscleGroup && item.name !== current.name
+    );
+    if (poolForSwap.length === 0) return;
+
+    const replacement = poolForSwap[Math.floor(Math.random() * poolForSwap.length)];
+    const meta = getPrescriptionDetails(selectedFormat);
+
+    const updated = [...generatedWorkout];
+    updated[indexToSwap] = { ...replacement, ...meta };
+    setGeneratedWorkout(updated);
+  };
+
   const handleStartGeneratedWorkout = () => {
     const formatLabel = selectedFormat.toUpperCase();
     const locLabel = locationMode === 'garage' ? 'Garage' : 'PF';
-    setActiveRoutineName(`${locLabel} [${formatLabel}] Session`);
+    setActiveRoutineName(`${locLabel} [${formatLabel}] Plan`);
     setActiveTab('workout');
   };
 
@@ -237,7 +253,7 @@ export default function App() {
     setExReps('');
   };
 
-  const handleSaveWorkout = () => {
+  const handleSaveWorkout = async () => {
     if (currentSessionSets.length === 0) return;
     const newSession: StrengthLog = {
       id: Date.now().toString(),
@@ -247,9 +263,45 @@ export default function App() {
       routineName: activeRoutineName,
       sets: currentSessionSets,
     };
+
     setStrengthLogs([newSession, ...strengthLogs]);
+
+    if (supabase) {
+      await supabase.from('workout_logs').insert([{
+        id: newSession.id,
+        profile: newSession.profile,
+        location: newSession.location,
+        routine_name: newSession.routineName,
+        sets: newSession.sets,
+      }]);
+    }
+
     setCurrentSessionSets([]);
     setExName('');
+  };
+
+  const handleDeleteLog = async (id: string) => {
+    setStrengthLogs(strengthLogs.filter((log) => log.id !== id));
+    if (supabase) {
+      await supabase.from('workout_logs').delete().eq('id', id);
+    }
+  };
+
+  const handleUpdateLogSet = async (logId: string, setId: string, newWeight: number, newReps: number) => {
+    const updated = strengthLogs.map((log) => {
+      if (log.id !== logId) return log;
+      return {
+        ...log,
+        sets: log.sets.map((s) => (s.id === setId ? { ...s, weightLbs: newWeight, reps: newReps } : s)),
+      };
+    });
+
+    setStrengthLogs(updated);
+
+    const targetLog = updated.find((l) => l.id === logId);
+    if (supabase && targetLog) {
+      await supabase.from('workout_logs').update({ sets: targetLog.sets }).eq('id', logId);
+    }
   };
 
   const handleAddCardio = (e: React.FormEvent) => {
@@ -283,6 +335,21 @@ export default function App() {
   };
 
   const latestMetrics = metricsLogs.find((m) => m.profile === activeProfile);
+
+  const getLastSessionData = (name: string) => {
+    if (!name) return null;
+    const userLogs = strengthLogs.filter((l) => l.profile === activeProfile);
+    for (const log of userLogs) {
+      const match = log.sets.filter((s) => s.exerciseName.toLowerCase() === name.toLowerCase());
+      if (match.length > 0) {
+        const lastSet = match[match.length - 1];
+        return { weightLbs: lastSet.weightLbs, reps: lastSet.reps, date: log.date };
+      }
+    }
+    return null;
+  };
+
+  const activeLastSession = getLastSessionData(exName);
 
   return (
     <div style={{ backgroundColor: '#0f172a', minHeight: '100vh', color: '#f8fafc', fontFamily: 'sans-serif', padding: '16px' }}>
@@ -484,29 +551,41 @@ export default function App() {
                   background: theme.primary, color: '#0f172a',
                 }}
               >
-                ⚡ Generate {selectedFormat.toUpperCase()} Workout
+                ⚡ Auto-Generate 3–5 Exercise Plan
               </button>
             </section>
 
             {generatedWorkout.length > 0 && (
               <section style={{ background: '#1e293b', padding: '16px', borderRadius: '20px', border: '1px solid #10b981', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 <h3 style={{ fontSize: '14px', fontWeight: 'bold', color: '#10b981', margin: 0 }}>
-                  Generated Routine ({generatedWorkout.length} Exercises):
+                  Structured Plan ({generatedWorkout.length} Exercises):
                 </h3>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   {generatedWorkout.map((item, idx) => (
                     <div key={idx} style={{ background: '#0f172a', padding: '10px 12px', borderRadius: '8px', border: '1px solid #334155', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <div>
-                        <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#f8fafc' }}>{item.name} <span style={{ fontSize: '10px', color: theme.accent, textTransform: 'uppercase' }}>({item.muscleGroup})</span></div>
-                        <div style={{ fontSize: '11px', color: '#10b981', marginTop: '2px' }}>{item.prescription}</div>
+                        <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#f8fafc' }}>
+                          {item.name} <span style={{ fontSize: '10px', color: theme.accent, textTransform: 'uppercase' }}>({item.muscleGroup})</span>
+                        </div>
+                        <div style={{ fontSize: '11px', color: '#10b981', marginTop: '2px' }}>
+                          📋 {item.sets} Sets × {item.reps} Reps | Rest: {item.restSeconds}s
+                        </div>
                         <div style={{ fontSize: '10px', color: '#94a3b8', marginTop: '1px' }}>Gear: {item.equipment}</div>
                       </div>
-                      <button
-                        onClick={() => { setExName(item.name); setActiveTab('workout'); }}
-                        style={{ background: '#334155', border: 'none', color: theme.accent, padding: '6px 10px', borderRadius: '6px', fontSize: '11px', cursor: 'pointer', fontWeight: 'bold' }}
-                      >
-                        + Quick Log
-                      </button>
+                      <div style={{ display: 'flex', gap: '6px' }}>
+                        <button
+                          onClick={() => handleSwapExercise(idx)}
+                          style={{ background: '#334155', border: 'none', color: '#f59e0b', padding: '6px 10px', borderRadius: '6px', fontSize: '11px', cursor: 'pointer', fontWeight: 'bold' }}
+                        >
+                          🔄 Swap
+                        </button>
+                        <button
+                          onClick={() => { setExName(item.name); setActiveTab('workout'); }}
+                          style={{ background: '#334155', border: 'none', color: theme.accent, padding: '6px 10px', borderRadius: '6px', fontSize: '11px', cursor: 'pointer', fontWeight: 'bold' }}
+                        >
+                          + Log
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -514,7 +593,7 @@ export default function App() {
                   onClick={handleStartGeneratedWorkout}
                   style={{ background: '#10b981', color: '#0f172a', border: 'none', padding: '10px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', fontSize: '12px', marginTop: '6px' }}
                 >
-                  🚀 Load Session into Active Logger
+                  🚀 Load Plan into Active Logger
                 </button>
               </section>
             )}
@@ -568,6 +647,13 @@ export default function App() {
                 )}
               </div>
 
+              {/* Last Session Tracker Badge */}
+              {activeLastSession && (
+                <div style={{ background: 'rgba(16, 185, 129, 0.15)', border: '1px solid #10b981', padding: '8px 12px', borderRadius: '8px', fontSize: '11px', color: '#10b981', display: 'flex', justifyContent: 'space-between' }}>
+                  <span>📌 <strong>Last Session ({activeLastSession.date}):</strong> {activeLastSession.weightLbs} lbs × {activeLastSession.reps} reps</span>
+                </div>
+              )}
+
               <button
                 onClick={handleAddSet}
                 style={{ background: theme.primary, color: '#0f172a', border: 'none', padding: '8px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', fontSize: '12px' }}
@@ -588,7 +674,7 @@ export default function App() {
                     onClick={handleSaveWorkout}
                     style={{ marginTop: '8px', background: '#10b981', color: '#0f172a', border: 'none', padding: '10px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', fontSize: '13px' }}
                   >
-                    💾 Save Workout Session
+                    💾 Save & Sync Workout Session
                   </button>
                 </div>
               )}
@@ -665,31 +751,65 @@ export default function App() {
 
         {activeTab === 'history' && (
           <section style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <h3 style={{ fontSize: '14px', fontWeight: 'bold', color: '#94a3b8', margin: 0 }}>Log History ({activeProfile})</h3>
-            {strengthLogs.filter(s => s.profile === activeProfile).map((s) => (
-              <div key={s.id} style={{ background: '#1e293b', padding: '12px', borderRadius: '12px', border: `1px solid ${theme.border}` }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', fontWeight: 'bold', color: theme.accent }}>
-                  <span>🏋️ {s.routineName}</span>
-                  <span style={{ color: '#94a3b8' }}>{s.date}</span>
-                </div>
-                <div style={{ marginTop: '6px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                  {s.sets.map((set) => (
-                    <div key={set.id} style={{ fontSize: '11px', color: '#cbd5e1' }}>
-                      • {set.exerciseName}: {set.weightLbs} lbs x {set.reps} reps {set.seatSetting && `[Seat: ${set.seatSetting}]`}
+            <h3 style={{ fontSize: '14px', fontWeight: 'bold', color: '#94a3b8', margin: 0 }}>Editable Log History</h3>
+            {strengthLogs.map((log) => {
+              const style = PROFILE_STYLES[log.profile];
+              const isEditing = editingLogId === log.id;
+
+              return (
+                <div key={log.id} style={{ background: '#1e293b', padding: '12px', borderRadius: '12px', border: `1px solid ${style.border}` }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', fontWeight: 'bold', color: style.accent }}>
+                    <span>🏋️ {log.routineName} ({log.profile})</span>
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      <span style={{ color: '#94a3b8', fontSize: '10px' }}>{log.date}</span>
+                      <button
+                        onClick={() => setEditingLogId(isEditing ? null : log.id)}
+                        style={{ background: '#334155', border: 'none', color: '#f59e0b', fontSize: '10px', padding: '4px 6px', borderRadius: '4px', cursor: 'pointer' }}
+                      >
+                        {isEditing ? 'Done' : '✏️ Edit'}
+                      </button>
+                      <button
+                        onClick={() => handleDeleteLog(log.id)}
+                        style={{ background: '#451a1a', border: '1px solid #ef4444', color: '#ef4444', fontSize: '10px', padding: '4px 6px', borderRadius: '4px', cursor: 'pointer' }}
+                      >
+                        🗑️ Delete
+                      </button>
                     </div>
-                  ))}
+                  </div>
+
+                  <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    {log.sets.map((set) => (
+                      <div key={set.id} style={{ fontSize: '11px', color: '#cbd5e1', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span>• {set.exerciseName} {set.seatSetting && `[Seat: ${set.seatSetting}]`}</span>
+
+                        {isEditing ? (
+                          <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                            <input
+                              type="number"
+                              defaultValue={set.weightLbs}
+                              onChange={(e) => handleUpdateLogSet(log.id, set.id, parseFloat(e.target.value) || 0, set.reps)}
+                              style={{ width: '50px', background: '#0f172a', border: '1px solid #334155', color: '#fff', fontSize: '10px', padding: '2px 4px', borderRadius: '4px' }}
+                            />
+                            <span>lbs x</span>
+                            <input
+                              type="number"
+                              defaultValue={set.reps}
+                              onChange={(e) => handleUpdateLogSet(log.id, set.id, set.weightLbs, parseInt(e.target.value) || 0)}
+                              style={{ width: '40px', background: '#0f172a', border: '1px solid #334155', color: '#fff', fontSize: '10px', padding: '2px 4px', borderRadius: '4px' }}
+                            />
+                            <span>reps</span>
+                          </div>
+                        ) : (
+                          <span style={{ fontWeight: 'bold', color: '#f8fafc' }}>
+                            {set.weightLbs} lbs × {set.reps} reps
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ))}
-            {cardioLogs.filter(c => c.profile === activeProfile).map((c) => (
-              <div key={c.id} style={{ background: '#1e293b', padding: '12px', borderRadius: '12px', border: '1px solid #334155', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div>
-                  <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#fff' }}>🏃 {c.type} - {c.distanceMiles} mi</div>
-                  <div style={{ fontSize: '10px', color: '#94a3b8' }}>{c.date} {c.notes && `• ${c.notes}`}</div>
-                </div>
-                <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#10b981' }}>{c.durationMinutes} mins</div>
-              </div>
-            ))}
+              );
+            })}
           </section>
         )}
 
