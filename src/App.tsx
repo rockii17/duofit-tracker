@@ -66,18 +66,6 @@ const PROFILE_STYLES = {
 };
 
 const GARAGE_POOL: ExerciseDef[] = [
-  // Bodyweight & Calisthenics
-  { name: 'Bodyweight Air Squats', equipment: 'Bodyweight', muscleGroup: 'legs' },
-  { name: 'Walking Bodyweight Lunges', equipment: 'Bodyweight', muscleGroup: 'legs' },
-  { name: 'Standard Push-Ups', equipment: 'Bodyweight', muscleGroup: 'chest' },
-  { name: 'Decline Push-Ups', equipment: 'NordicTrack Bench', muscleGroup: 'chest' },
-  { name: 'Power Rack Pull-Ups / Chin-Ups', equipment: 'Titan Power Rack', muscleGroup: 'back' },
-  { name: 'Power Rack Dips', equipment: 'Titan Power Rack (Dip Bars)', muscleGroup: 'arms' },
-  { name: 'Plank Hold / Side Plank', equipment: 'Bodyweight', muscleGroup: 'core' },
-  { name: 'Hanging Leg Raises', equipment: 'Titan Power Rack', muscleGroup: 'core' },
-  { name: 'Burpees / Mountain Climbers', equipment: 'Bodyweight', muscleGroup: 'cardio' },
-
-  // Heavy Equipment & Free Weights
   { name: 'Barbell Back Squat', equipment: 'Titan Power Rack & Bumper Plates', muscleGroup: 'legs' },
   { name: 'Goblet Squat', equipment: 'Hex Dumbbells / Kettlebell', muscleGroup: 'legs' },
   { name: 'Landmine Hack Squat', equipment: 'Titan Power Rack (Landmine)', muscleGroup: 'legs' },
@@ -104,16 +92,6 @@ const GARAGE_POOL: ExerciseDef[] = [
 ];
 
 const PLANET_FITNESS_POOL: ExerciseDef[] = [
-  // Bodyweight & Calisthenics
-  { name: 'Bodyweight Air Squats', equipment: 'Bodyweight', muscleGroup: 'legs' },
-  { name: 'Walking Bodyweight Lunges', equipment: 'Bodyweight', muscleGroup: 'legs' },
-  { name: 'Standard Push-Ups', equipment: 'Bodyweight', muscleGroup: 'chest' },
-  { name: 'Bench Incline Push-Ups', equipment: 'Flat Bench Press Benches', muscleGroup: 'chest' },
-  { name: 'Bodyweight Glute Bridges', equipment: 'Yoga & Exercise Mats', muscleGroup: 'legs' },
-  { name: 'Plank Hold / Side Plank', equipment: 'Yoga & Exercise Mats', muscleGroup: 'core' },
-  { name: 'Mountain Climbers', equipment: 'Yoga & Exercise Mats', muscleGroup: 'cardio' },
-  { name: 'Bodyweight Burpees', equipment: 'Bodyweight', muscleGroup: 'cardio' },
-
   // Cardio Machines
   { name: 'Treadmill Run / Walk', equipment: 'Treadmills', muscleGroup: 'cardio' },
   { name: 'Elliptical Striding', equipment: 'Ellipticals', muscleGroup: 'cardio' },
@@ -312,7 +290,7 @@ export default function App() {
   };
 
   const handleAddSet = () => {
-    if (!exName || !exReps) return;
+    if (!exName || !exWeight || !exReps) return;
     const newSet: StrengthSet = {
       id: Date.now().toString(),
       exerciseName: exName,
@@ -696,7 +674,7 @@ export default function App() {
                 />
                 <input
                   type="number"
-                  placeholder="Weight (lbs) [0 for BW]"
+                  placeholder="Weight (lbs)"
                   value={exWeight}
                   onChange={(e) => setExWeight(e.target.value)}
                   style={{ background: '#0f172a', border: '1px solid #334155', borderRadius: '8px', padding: '8px', color: '#fff', fontSize: '12px' }}
@@ -719,6 +697,7 @@ export default function App() {
                 )}
               </div>
 
+              {/* Last Session Tracker Badge */}
               {activeLastSession && (
                 <div style={{ background: 'rgba(16, 185, 129, 0.15)', border: '1px solid #10b981', padding: '8px 12px', borderRadius: '8px', fontSize: '11px', color: '#10b981', display: 'flex', justifyContent: 'space-between' }}>
                   <span>📌 <strong>Last Session ({activeLastSession.date}):</strong> {activeLastSession.weightLbs} lbs × {activeLastSession.reps} reps</span>
