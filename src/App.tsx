@@ -494,11 +494,26 @@ export default function App() {
 
   const muscleList: MuscleTarget[] = ['legs', 'back', 'chest', 'shoulders', 'arms', 'core', 'cardio'];
 
+  // Helper to render last logged performance for active profile
+  const getLastLoggedSet = (exerciseName: string) => {
+    for (const log of strengthLogs) {
+      if (log.profile === activeProfile) {
+        const matchingSet = log.sets.find(
+          (s) => s.exerciseName.toLowerCase() === exerciseName.toLowerCase()
+        );
+        if (matchingSet) {
+          return `${matchingSet.weightLbs} lbs × ${matchingSet.reps} reps (${log.date})`;
+        }
+      }
+    }
+    return null;
+  };
+
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#111827', color: '#f3f4f6', fontFamily: 'sans-serif', padding: '1rem' }}>
       {/* Profile Header */}
       <div style={{ maxWidth: '800px', margin: '0 auto 1.5rem auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h2>Fitness Tracker</h2>
+        <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>DuoFit Tracker</h2>
         <div>
           {(['Roxanne', 'Diana'] as UserProfile[]).map((prof) => (
             <button
@@ -508,7 +523,7 @@ export default function App() {
                 padding: '0.5rem 1rem',
                 marginLeft: '0.5rem',
                 borderRadius: '8px',
-                border: 'none',
+                border: activeProfile === prof ? `2px solid ${PROFILE_STYLES[prof].border}` : 'none',
                 fontWeight: 'bold',
                 backgroundColor: activeProfile === prof ? PROFILE_STYLES[prof].primary : '#374151',
                 color: '#fff',
@@ -534,6 +549,7 @@ export default function App() {
               backgroundColor: activeTab === tab ? theme.primary : 'transparent',
               color: '#fff',
               cursor: 'pointer',
+              fontWeight: activeTab === tab ? 'bold' : 'normal',
               textTransform: 'capitalize'
             }}
           >
@@ -547,22 +563,24 @@ export default function App() {
         {/* Workout Generator View */}
         {activeTab === 'generator' && (
           <div>
-            <h3>Generator Options</h3>
+            <h3 style={{ fontSize: '1.2rem', fontWeight: 'bold', marginBottom: '1rem' }}>Workout Generator</h3>
+            
             <div style={{ marginBottom: '1rem' }}>
-              <label style={{ marginRight: '0.5rem' }}>Location:</label>
+              <label style={{ marginRight: '0.5rem', fontWeight: 'bold' }}>Location:</label>
               {(['garage', 'planet_fitness'] as LocationMode[]).map((loc) => (
                 <button
                   key={loc}
                   onClick={() => setLocationMode(loc)}
                   style={{
-                    padding: '0.25rem 0.75rem',
+                    padding: '0.35rem 0.85rem',
                     marginRight: '0.5rem',
-                    borderRadius: '4px',
+                    borderRadius: '6px',
                     border: 'none',
                     backgroundColor: locationMode === loc ? theme.primary : '#374151',
                     color: '#fff',
                     textTransform: 'capitalize',
-                    cursor: 'pointer'
+                    cursor: 'pointer',
+                    fontWeight: locationMode === loc ? 'bold' : 'normal'
                   }}
                 >
                   {loc.replace('_', ' ')}
@@ -571,20 +589,21 @@ export default function App() {
             </div>
 
             <div style={{ marginBottom: '1rem' }}>
-              <label style={{ marginRight: '0.5rem' }}>Filter Mode:</label>
+              <label style={{ marginRight: '0.5rem', fontWeight: 'bold' }}>Filter Mode:</label>
               {(['muscle', 'equipment'] as FilterMode[]).map((mode) => (
                 <button
                   key={mode}
                   onClick={() => setFilterMode(mode)}
                   style={{
-                    padding: '0.25rem 0.75rem',
+                    padding: '0.35rem 0.85rem',
                     marginRight: '0.5rem',
-                    borderRadius: '4px',
+                    borderRadius: '6px',
                     border: 'none',
                     backgroundColor: filterMode === mode ? theme.primary : '#374151',
                     color: '#fff',
                     textTransform: 'capitalize',
-                    cursor: 'pointer'
+                    cursor: 'pointer',
+                    fontWeight: filterMode === mode ? 'bold' : 'normal'
                   }}
                 >
                   {mode}
@@ -594,16 +613,16 @@ export default function App() {
 
             {filterMode === 'muscle' ? (
               <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', marginBottom: '0.5rem' }}>Target Muscles:</label>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>Target Muscles:</label>
                 {muscleList.map((m) => (
                   <button
                     key={m}
                     onClick={() => toggleMuscle(m)}
                     style={{
-                      padding: '0.25rem 0.5rem',
+                      padding: '0.35rem 0.75rem',
                       marginRight: '0.5rem',
                       marginBottom: '0.5rem',
-                      borderRadius: '4px',
+                      borderRadius: '6px',
                       border: 'none',
                       backgroundColor: selectedMuscles.includes(m) ? theme.primary : '#374151',
                       color: '#fff',
@@ -617,16 +636,16 @@ export default function App() {
               </div>
             ) : (
               <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', marginBottom: '0.5rem' }}>Available Equipment:</label>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>Available Equipment:</label>
                 {availableEquipmentList.map((eq) => (
                   <button
                     key={eq}
                     onClick={() => toggleEquipment(eq)}
                     style={{
-                      padding: '0.25rem 0.5rem',
+                      padding: '0.35rem 0.75rem',
                       marginRight: '0.5rem',
                       marginBottom: '0.5rem',
-                      borderRadius: '4px',
+                      borderRadius: '6px',
                       border: 'none',
                       backgroundColor: selectedEquipment.includes(eq) ? theme.primary : '#374151',
                       color: '#fff',
@@ -639,22 +658,23 @@ export default function App() {
               </div>
             )}
 
-            <div style={{ marginBottom: '1rem' }}>
-              <label style={{ marginRight: '0.5rem' }}>Format:</label>
+            <div style={{ marginBottom: '1.5rem' }}>
+              <label style={{ marginRight: '0.5rem', fontWeight: 'bold' }}>Format:</label>
               {(['standard', 'emom', 'amrap', 'pyramid', 'tabata'] as WorkoutFormat[]).map((fmt) => (
                 <button
                   key={fmt}
                   onClick={() => setSelectedFormat(fmt)}
                   style={{
-                    padding: '0.25rem 0.75rem',
+                    padding: '0.35rem 0.85rem',
                     marginRight: '0.5rem',
-                    borderRadius: '4px',
+                    borderRadius: '6px',
                     border: 'none',
                     backgroundColor: selectedFormat === fmt ? theme.primary : '#374151',
                     color: '#fff',
                     textTransform: 'uppercase',
-                    fontSize: '0.8rem',
-                    cursor: 'pointer'
+                    fontSize: '0.85rem',
+                    cursor: 'pointer',
+                    fontWeight: selectedFormat === fmt ? 'bold' : 'normal'
                   }}
                 >
                   {fmt}
@@ -664,21 +684,26 @@ export default function App() {
 
             <button
               onClick={handleGenerateWorkout}
-              style={{ padding: '0.75rem 1.5rem', borderRadius: '8px', border: 'none', backgroundColor: theme.primary, color: '#fff', fontWeight: 'bold', cursor: 'pointer' }}
+              style={{ padding: '0.75rem 1.5rem', borderRadius: '8px', border: 'none', backgroundColor: theme.primary, color: '#fff', fontWeight: 'bold', cursor: 'pointer', fontSize: '1rem' }}
             >
-              Generate Plan
+              Generate Routine
             </button>
 
             {generatedWorkout.length > 0 && (
               <div style={{ marginTop: '1.5rem' }}>
-                <h4>Your Plan:</h4>
+                <h4 style={{ fontSize: '1.1rem', fontWeight: 'bold', marginBottom: '0.75rem' }}>Generated Routine:</h4>
                 {generatedWorkout.map((ex, idx) => (
-                  <div key={idx} style={{ backgroundColor: '#1f2937', padding: '1rem', borderRadius: '8px', marginBottom: '0.5rem' }}>
-                    <strong>{ex.name}</strong> - <em>{ex.prescription}</em>
-                    <button onClick={() => handleSwapExercise(idx)} style={{ marginLeft: '1rem', padding: '0.25rem 0.5rem', backgroundColor: '#4b5563', border: 'none', color: '#fff', borderRadius: '4px', cursor: 'pointer' }}>Swap</button>
+                  <div key={idx} style={{ backgroundColor: '#1f2937', padding: '1rem', borderRadius: '8px', marginBottom: '0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <strong style={{ fontSize: '1rem' }}>{ex.name}</strong>
+                      <div style={{ fontSize: '0.85rem', color: '#9ca3af', marginTop: '0.25rem' }}>
+                        {ex.prescription} ({ex.equipment})
+                      </div>
+                    </div>
+                    <button onClick={() => handleSwapExercise(idx)} style={{ padding: '0.35rem 0.75rem', backgroundColor: '#374151', border: '1px solid #4b5563', color: '#fff', borderRadius: '6px', cursor: 'pointer', fontSize: '0.85rem' }}>Swap</button>
                   </div>
                 ))}
-                <button onClick={handleStartGeneratedWorkout} style={{ marginTop: '1rem', padding: '0.5rem 1rem', backgroundColor: '#22c55e', border: 'none', color: '#fff', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}>Start Workout</button>
+                <button onClick={handleStartGeneratedWorkout} style={{ marginTop: '0.5rem', padding: '0.75rem 1.5rem', backgroundColor: '#22c55e', border: 'none', color: '#fff', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', fontSize: '1rem' }}>Start Routine</button>
               </div>
             )}
           </div>
@@ -687,52 +712,66 @@ export default function App() {
         {/* Workout / Timer View */}
         {activeTab === 'workout' && (
           <div>
-            <h3>Active Session: {activeRoutineName}</h3>
+            <h3 style={{ fontSize: '1.2rem', fontWeight: 'bold', marginBottom: '1rem' }}>Active Session: {activeRoutineName}</h3>
             {selectedFormat === 'tabata' && (
               <TabataTimer exerciseName={activeRoutineName} themeColor={theme.primary} />
             )}
 
-            <div style={{ backgroundColor: '#1f2937', padding: '1rem', borderRadius: '8px', marginTop: '1rem' }}>
-              <h4>Log Exercise Set</h4>
-              <input
-                placeholder="Exercise Name"
-                value={exName}
-                onChange={(e) => setExName(e.target.value)}
-                style={{ width: '100%', padding: '0.5rem', marginBottom: '0.5rem', borderRadius: '4px', border: '1px solid #4b5563', backgroundColor: '#374151', color: '#fff' }}
-              />
-              <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
+            <div style={{ backgroundColor: '#1f2937', padding: '1.25rem', borderRadius: '10px', marginTop: '1rem' }}>
+              <h4 style={{ fontWeight: 'bold', marginBottom: '1rem' }}>Log Exercise Set</h4>
+              
+              <div style={{ marginBottom: '0.75rem' }}>
+                <input
+                  placeholder="Exercise Name (e.g. Bench Press)"
+                  value={exName}
+                  onChange={(e) => setExName(e.target.value)}
+                  style={{ width: '100%', padding: '0.6rem', borderRadius: '6px', border: '1px solid #4b5563', backgroundColor: '#374151', color: '#fff', boxSizing: 'border-box' }}
+                />
+                {exName && getLastLoggedSet(exName) && (
+                  <div style={{ fontSize: '0.8rem', color: theme.accent, marginTop: '0.35rem' }}>
+                    Last logged ({activeProfile}): {getLastLoggedSet(exName)}
+                  </div>
+                )}
+              </div>
+
+              <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem' }}>
                 <input
                   placeholder="Weight (lbs)"
                   value={exWeight}
                   onChange={(e) => setExWeight(e.target.value)}
-                  style={{ flex: 1, padding: '0.5rem', borderRadius: '4px', border: '1px solid #4b5563', backgroundColor: '#374151', color: '#fff' }}
+                  style={{ flex: 1, padding: '0.6rem', borderRadius: '6px', border: '1px solid #4b5563', backgroundColor: '#374151', color: '#fff' }}
                 />
                 <input
                   placeholder="Reps"
                   value={exReps}
                   onChange={(e) => setExReps(e.target.value)}
-                  style={{ flex: 1, padding: '0.5rem', borderRadius: '4px', border: '1px solid #4b5563', backgroundColor: '#374151', color: '#fff' }}
+                  style={{ flex: 1, padding: '0.6rem', borderRadius: '6px', border: '1px solid #4b5563', backgroundColor: '#374151', color: '#fff' }}
                 />
                 {locationMode === 'planet_fitness' && (
                   <input
-                    placeholder="Seat Settings"
+                    placeholder="Seat Setting"
                     value={exSeat}
                     onChange={(e) => setExSeat(e.target.value)}
-                    style={{ flex: 1, padding: '0.5rem', borderRadius: '4px', border: '1px solid #4b5563', backgroundColor: '#374151', color: '#fff' }}
+                    style={{ flex: 1, padding: '0.6rem', borderRadius: '6px', border: '1px solid #4b5563', backgroundColor: '#374151', color: '#fff' }}
                   />
                 )}
               </div>
-              <button onClick={handleAddSet} style={{ padding: '0.5rem 1rem', backgroundColor: theme.primary, border: 'none', color: '#fff', borderRadius: '6px', cursor: 'pointer' }}>Add Set</button>
+              
+              <button onClick={handleAddSet} style={{ padding: '0.6rem 1.25rem', backgroundColor: theme.primary, border: 'none', color: '#fff', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}>
+                Add Set
+              </button>
 
               {currentSessionSets.length > 0 && (
-                <div style={{ marginTop: '1rem' }}>
-                  <h5>Logged Sets:</h5>
-                  {currentSessionSets.map((s) => (
-                    <div key={s.id} style={{ fontSize: '0.9rem', color: '#d1d5db' }}>
-                      • {s.exerciseName}: {s.weightLbs} lbs × {s.reps} reps {s.seatSetting ? `(Seat: ${s.seatSetting})` : ''}
+                <div style={{ marginTop: '1.25rem', borderTop: '1px solid #374151', paddingTop: '1rem' }}>
+                  <h5 style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>Current Session Sets:</h5>
+                  {currentSessionSets.map((s, index) => (
+                    <div key={s.id} style={{ fontSize: '0.9rem', color: '#d1d5db', padding: '0.25rem 0' }}>
+                      {index + 1}. <strong>{s.exerciseName}</strong>: {s.weightLbs} lbs × {s.reps} reps {s.seatSetting ? `[Seat: ${s.seatSetting}]` : ''}
                     </div>
                   ))}
-                  <button onClick={handleSaveWorkout} style={{ marginTop: '1rem', padding: '0.5rem 1rem', backgroundColor: '#22c55e', border: 'none', color: '#fff', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}>Save Workout Session</button>
+                  <button onClick={handleSaveWorkout} style={{ marginTop: '1rem', padding: '0.75rem 1.5rem', backgroundColor: '#22c55e', border: 'none', color: '#fff', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', width: '100%' }}>
+                    Save Workout Session
+                  </button>
                 </div>
               )}
             </div>
@@ -742,12 +781,12 @@ export default function App() {
         {/* Cardio View */}
         {activeTab === 'cardio' && (
           <div>
-            <h3>Cardio Log & Tools</h3>
+            <h3 style={{ fontSize: '1.2rem', fontWeight: 'bold', marginBottom: '1rem' }}>Cardio Tracker</h3>
             <TabataTimer exerciseName="Standalone Tabata HIIT" themeColor={theme.primary} />
             
-            <form onSubmit={handleAddCardio} style={{ backgroundColor: '#1f2937', padding: '1rem', borderRadius: '8px', marginTop: '1.5rem' }}>
-              <h4>Log Cardio Session</h4>
-              <select value={cardioType} onChange={(e) => setCardioType(e.target.value as any)} style={{ padding: '0.5rem', marginBottom: '0.5rem', width: '100%', borderRadius: '4px', border: '1px solid #4b5563', backgroundColor: '#374151', color: '#fff' }}>
+            <form onSubmit={handleAddCardio} style={{ backgroundColor: '#1f2937', padding: '1.25rem', borderRadius: '10px', marginTop: '1.5rem' }}>
+              <h4 style={{ fontWeight: 'bold', marginBottom: '1rem' }}>Log Cardio Session</h4>
+              <select value={cardioType} onChange={(e) => setCardioType(e.target.value as any)} style={{ padding: '0.6rem', marginBottom: '0.75rem', width: '100%', borderRadius: '6px', border: '1px solid #4b5563', backgroundColor: '#374151', color: '#fff' }}>
                 <option value="Run">Run</option>
                 <option value="Walk">Walk</option>
                 <option value="Tabata">Tabata</option>
@@ -756,10 +795,10 @@ export default function App() {
                 <option value="Elliptical">Elliptical</option>
                 <option value="StairMaster">StairMaster</option>
               </select>
-              <input placeholder="Distance (Miles)" value={cardioDist} onChange={(e) => setCardioDist(e.target.value)} style={{ padding: '0.5rem', marginBottom: '0.5rem', width: '100%', borderRadius: '4px', border: '1px solid #4b5563', backgroundColor: '#374151', color: '#fff' }} />
-              <input placeholder="Duration (Minutes)" value={cardioTime} onChange={(e) => setCardioTime(e.target.value)} style={{ padding: '0.5rem', marginBottom: '0.5rem', width: '100%', borderRadius: '4px', border: '1px solid #4b5563', backgroundColor: '#374151', color: '#fff' }} />
-              <input placeholder="Notes / Effort" value={cardioNotes} onChange={(e) => setCardioNotes(e.target.value)} style={{ padding: '0.5rem', marginBottom: '0.5rem', width: '100%', borderRadius: '4px', border: '1px solid #4b5563', backgroundColor: '#374151', color: '#fff' }} />
-              <button type="submit" style={{ padding: '0.5rem 1rem', backgroundColor: theme.primary, border: 'none', color: '#fff', borderRadius: '6px', cursor: 'pointer' }}>Save Cardio Log</button>
+              <input placeholder="Distance (Miles)" value={cardioDist} onChange={(e) => setCardioDist(e.target.value)} style={{ padding: '0.6rem', marginBottom: '0.75rem', width: '100%', borderRadius: '6px', border: '1px solid #4b5563', backgroundColor: '#374151', color: '#fff', boxSizing: 'border-box' }} />
+              <input placeholder="Duration (Minutes)" value={cardioTime} onChange={(e) => setCardioTime(e.target.value)} style={{ padding: '0.6rem', marginBottom: '0.75rem', width: '100%', borderRadius: '6px', border: '1px solid #4b5563', backgroundColor: '#374151', color: '#fff', boxSizing: 'border-box' }} />
+              <input placeholder="Notes / Effort / Pace" value={cardioNotes} onChange={(e) => setCardioNotes(e.target.value)} style={{ padding: '0.6rem', marginBottom: '0.75rem', width: '100%', borderRadius: '6px', border: '1px solid #4b5563', backgroundColor: '#374151', color: '#fff', boxSizing: 'border-box' }} />
+              <button type="submit" style={{ padding: '0.6rem 1.25rem', backgroundColor: theme.primary, border: 'none', color: '#fff', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}>Save Cardio Log</button>
             </form>
           </div>
         )}
@@ -767,18 +806,18 @@ export default function App() {
         {/* Body Metrics View */}
         {activeTab === 'metrics' && (
           <div>
-            <h3>Body Metrics</h3>
-            <form onSubmit={handleAddMetrics} style={{ backgroundColor: '#1f2937', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem' }}>
-              <h4>Log Metrics</h4>
-              <input placeholder="Weight (lbs)" value={weightInput} onChange={(e) => setWeightInput(e.target.value)} style={{ padding: '0.5rem', marginBottom: '0.5rem', width: '100%', borderRadius: '4px', border: '1px solid #4b5563', backgroundColor: '#374151', color: '#fff' }} />
-              <input placeholder="Height (Inches)" value={heightInput} onChange={(e) => setHeightInput(e.target.value)} style={{ padding: '0.5rem', marginBottom: '0.5rem', width: '100%', borderRadius: '4px', border: '1px solid #4b5563', backgroundColor: '#374151', color: '#fff' }} />
-              <button type="submit" style={{ padding: '0.5rem 1rem', backgroundColor: theme.primary, border: 'none', color: '#fff', borderRadius: '6px', cursor: 'pointer' }}>Save Metrics</button>
+            <h3 style={{ fontSize: '1.2rem', fontWeight: 'bold', marginBottom: '1rem' }}>Body Metrics</h3>
+            <form onSubmit={handleAddMetrics} style={{ backgroundColor: '#1f2937', padding: '1.25rem', borderRadius: '10px', marginBottom: '1.5rem' }}>
+              <h4 style={{ fontWeight: 'bold', marginBottom: '1rem' }}>Log Measurements ({activeProfile})</h4>
+              <input placeholder="Weight (lbs)" value={weightInput} onChange={(e) => setWeightInput(e.target.value)} style={{ padding: '0.6rem', marginBottom: '0.75rem', width: '100%', borderRadius: '6px', border: '1px solid #4b5563', backgroundColor: '#374151', color: '#fff', boxSizing: 'border-box' }} />
+              <input placeholder="Height (Inches)" value={heightInput} onChange={(e) => setHeightInput(e.target.value)} style={{ padding: '0.6rem', marginBottom: '0.75rem', width: '100%', borderRadius: '6px', border: '1px solid #4b5563', backgroundColor: '#374151', color: '#fff', boxSizing: 'border-box' }} />
+              <button type="submit" style={{ padding: '0.6rem 1.25rem', backgroundColor: theme.primary, border: 'none', color: '#fff', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}>Save Metrics</button>
             </form>
 
-            <h4>Metrics History</h4>
+            <h4 style={{ fontWeight: 'bold', marginBottom: '0.75rem' }}>Metrics History</h4>
             {metricsLogs.map((m) => (
-              <div key={m.id} style={{ backgroundColor: '#1f2937', padding: '0.75rem', borderRadius: '6px', marginBottom: '0.5rem' }}>
-                <strong>{m.date}</strong> [{m.profile}]: {m.weightLbs} lbs ({m.heightInches} in)
+              <div key={m.id} style={{ backgroundColor: '#1f2937', padding: '0.85rem', borderRadius: '8px', marginBottom: '0.5rem', borderLeft: `4px solid ${PROFILE_STYLES[m.profile].primary}` }}>
+                <strong>{m.date}</strong> [{m.profile}]: <strong>{m.weightLbs} lbs</strong> ({m.heightInches} in)
               </div>
             ))}
           </div>
@@ -787,25 +826,25 @@ export default function App() {
         {/* History View */}
         {activeTab === 'history' && (
           <div>
-            <h3>Logged Workout History</h3>
+            <h3 style={{ fontSize: '1.2rem', fontWeight: 'bold', marginBottom: '1rem' }}>Workout History</h3>
             {strengthLogs.length === 0 ? (
-              <p>No strength workouts recorded yet.</p>
+              <p style={{ color: '#9ca3af' }}>No strength workouts recorded yet.</p>
             ) : (
               strengthLogs.map((log) => (
-                <div key={log.id} style={{ backgroundColor: '#1f2937', padding: '1rem', borderRadius: '8px', marginBottom: '1rem' }}>
+                <div key={log.id} style={{ backgroundColor: '#1f2937', padding: '1rem', borderRadius: '8px', marginBottom: '1rem', borderLeft: `4px solid ${PROFILE_STYLES[log.profile].primary}` }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                    <strong>{log.date} - {log.routineName} ({log.profile})</strong>
+                    <strong style={{ fontSize: '1rem' }}>{log.date} - {log.routineName} ({log.profile})</strong>
                     <div>
-                      <button onClick={() => setEditingLogId(editingLogId === log.id ? null : log.id)} style={{ marginRight: '0.5rem', padding: '0.25rem 0.5rem', backgroundColor: '#3b82f6', border: 'none', color: '#fff', borderRadius: '4px', cursor: 'pointer' }}>
+                      <button onClick={() => setEditingLogId(editingLogId === log.id ? null : log.id)} style={{ marginRight: '0.5rem', padding: '0.25rem 0.5rem', backgroundColor: '#3b82f6', border: 'none', color: '#fff', borderRadius: '4px', cursor: 'pointer', fontSize: '0.8rem' }}>
                         {editingLogId === log.id ? 'Done' : 'Edit'}
                       </button>
-                      <button onClick={() => handleDeleteLog(log.id)} style={{ padding: '0.25rem 0.5rem', backgroundColor: '#ef4444', border: 'none', color: '#fff', borderRadius: '4px', cursor: 'pointer' }}>Delete</button>
+                      <button onClick={() => handleDeleteLog(log.id)} style={{ padding: '0.25rem 0.5rem', backgroundColor: '#ef4444', border: 'none', color: '#fff', borderRadius: '4px', cursor: 'pointer', fontSize: '0.8rem' }}>Delete</button>
                     </div>
                   </div>
                   {log.sets.map((s) => (
-                    <div key={s.id} style={{ fontSize: '0.9rem', color: '#9ca3af', marginBottom: '0.25rem' }}>
+                    <div key={s.id} style={{ fontSize: '0.9rem', color: '#d1d5db', marginBottom: '0.25rem' }}>
                       {editingLogId === log.id ? (
-                        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', margin: '0.25rem 0' }}>
                           <span>{s.exerciseName}:</span>
                           <input
                             type="number"
@@ -823,7 +862,7 @@ export default function App() {
                           <span>reps</span>
                         </div>
                       ) : (
-                        <span>• {s.exerciseName}: {s.weightLbs} lbs × {s.reps} reps {s.seatSetting ? `(Seat: ${s.seatSetting})` : ''}</span>
+                        <span>• {s.exerciseName}: {s.weightLbs} lbs × {s.reps} reps {s.seatSetting ? `[Seat: ${s.seatSetting}]` : ''}</span>
                       )}
                     </div>
                   ))}
@@ -831,10 +870,10 @@ export default function App() {
               ))
             )}
 
-            <h3>Logged Cardio History</h3>
+            <h3 style={{ fontSize: '1.2rem', fontWeight: 'bold', marginTop: '1.5rem', marginBottom: '1rem' }}>Cardio History</h3>
             {cardioLogs.map((c) => (
-              <div key={c.id} style={{ backgroundColor: '#1f2937', padding: '0.75rem', borderRadius: '6px', marginBottom: '0.5rem' }}>
-                <strong>{c.date}</strong> [{c.profile}] - {c.type}: {c.durationMinutes} mins {c.distanceMiles ? `(${c.distanceMiles} mi)` : ''} {c.notes ? `- ${c.notes}` : ''}
+              <div key={c.id} style={{ backgroundColor: '#1f2937', padding: '0.85rem', borderRadius: '8px', marginBottom: '0.5rem', borderLeft: `4px solid ${PROFILE_STYLES[c.profile].primary}` }}>
+                <strong>{c.date}</strong> [{c.profile}] - <strong>{c.type}</strong>: {c.durationMinutes} mins {c.distanceMiles ? `(${c.distanceMiles} mi)` : ''} {c.notes ? `- ${c.notes}` : ''}
               </div>
             ))}
           </div>
