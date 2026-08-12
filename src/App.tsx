@@ -92,20 +92,69 @@ const GARAGE_POOL: ExerciseDef[] = [
 ];
 
 const PLANET_FITNESS_POOL: ExerciseDef[] = [
-  { name: 'Machine Chest Press', equipment: 'Chest Press Machine', muscleGroup: 'chest' },
-  { name: 'Pectoral Fly / Reverse Fly', equipment: 'Pectoral Fly / Reverse Fly Machine', muscleGroup: 'chest' },
-  { name: 'Machine Lat Pulldown', equipment: 'Lat Pulldown Machine', muscleGroup: 'back' },
-  { name: 'Seated Cable Row', equipment: 'Seated Row Machine', muscleGroup: 'back' },
-  { name: 'Seated Shoulder Press', equipment: 'Shoulder Press Machine', muscleGroup: 'shoulders' },
-  { name: 'Machine Lateral Raise', equipment: 'Lateral Raise Machine', muscleGroup: 'shoulders' },
-  { name: 'Machine Bicep Curl', equipment: 'Bicep Curl Machine', muscleGroup: 'arms' },
-  { name: 'Tricep Extension / Tricep Press', equipment: 'Tricep Extension / Tricep Press Machine', muscleGroup: 'arms' },
-  { name: 'Seated Leg Press', equipment: 'Seated Leg Press Machine', muscleGroup: 'legs' },
-  { name: 'Seated Leg Extension', equipment: 'Leg Extension Machine', muscleGroup: 'legs' },
-  { name: 'Lying or Seated Leg Curl', equipment: 'Lying or Seated Leg Curl Machine', muscleGroup: 'legs' },
-  { name: 'Abdominal Crunch Machine', equipment: 'Abdominal Crunch Machine', muscleGroup: 'core' },
+  // Cardio Machines
   { name: 'Treadmill Run / Walk', equipment: 'Treadmills', muscleGroup: 'cardio' },
-];
+  { name: 'Elliptical Striding', equipment: 'Ellipticals', muscleGroup: 'cardio' },
+  { name: 'Arc Trainer Workout', equipment: 'Arc Trainers', muscleGroup: 'cardio' },
+  { name: 'StairMaster Climb', equipment: 'StairMaster Stepmills', muscleGroup: 'cardio' },
+  { name: 'Stationary Bike Ride', equipment: 'Stationary Bikes (Upright and Recumbent)', muscleGroup: 'cardio' },
+  { name: 'Rowing Machine Intervals', equipment: 'Rowing Machines', muscleGroup: 'cardio' },
+  { name: 'Recumbent Stepper Session', equipment: 'Recumbent Steppers (SciFit/NuStep)', muscleGroup: 'cardio' },
+  { name: 'Upper Body Ergometer Cycle', equipment: 'Upper Body Ergometers (Arm Bikes)', muscleGroup: 'cardio' },
+
+  // Pin-Loaded Strength & Isolation
+  { name: 'Machine Chest Press', equipment: 'Chest Press / Incline Chest Press', muscleGroup: 'chest' },
+  { name: 'Incline Machine Press', equipment: 'Chest Press / Incline Chest Press', muscleGroup: 'chest' },
+  { name: 'Pectoral Fly', equipment: 'Pectoral Fly / Rear Delt', muscleGroup: 'chest' },
+  { name: 'Rear Delt Fly', equipment: 'Pectoral Fly / Rear Delt', muscleGroup: 'shoulders' },
+  { name: 'Machine Shoulder Press', equipment: 'Shoulder Press', muscleGroup: 'shoulders' },
+  { name: 'Machine Lateral Raise', equipment: 'Lateral Raise', muscleGroup: 'shoulders' },
+  { name: 'Machine Lat Pulldown', equipment: 'Lat Pulldown', muscleGroup: 'back' },
+  { name: 'Machine Seated Row', equipment: 'Seated Row', muscleGroup: 'back' },
+  { name: 'Machine Bicep Curl', equipment: 'Bicep Curl', muscleGroup: 'arms' },
+  { name: 'Machine Tricep Extension', equipment: 'Tricep Extension / Tricep Press', muscleGroup: 'arms' },
+  { name: 'Assisted Dip', equipment: 'Assisted Dip and Chin-Up', muscleGroup: 'arms' },
+  { name: 'Assisted Chin-Up', equipment: 'Assisted Dip and Chin-Up', muscleGroup: 'back' },
+  { name: 'Abdominal Crunch Machine', equipment: 'Abdominal Crunch / Rotary Torso', muscleGroup: 'core' },
+  { name: 'Rotary Torso Twist', equipment: 'Abdominal Crunch / Rotary Torso', muscleGroup: 'core' },
+  { name: 'Seated Leg Extension', equipment: 'Leg Extension', muscleGroup: 'legs' },
+  { name: 'Seated / Lying Leg Curl', equipment: 'Seated Leg Curl / Lying Leg Curl', muscleGroup: 'legs' },
+  { name: 'Seated Leg Press', equipment: 'Leg Press', muscleGroup: 'legs' },
+  { name: 'Hip Abductor (Outer Thigh)', equipment: 'Hip Abductor / Hip Adductor', muscleGroup: 'legs' },
+  { name: 'Hip Adductor (Inner Thigh)', equipment: 'Hip Abductor / Hip Adductor', muscleGroup: 'legs' },
+  { name: 'Machine Glute Drive', equipment: 'Glute Drive / Glute Kickback', muscleGroup: 'legs' },
+
+  // Plate-Loaded & Heavy Strength Equipment
+  { name: 'Smith Machine Squat', equipment: 'Smith Machines', muscleGroup: 'legs' },
+  { name: 'Smith Machine Bench Press', equipment: 'Smith Machines', muscleGroup: 'chest' },
+  { name: 'Smith Machine Shoulder Press', equipment: 'Smith Machines', muscleGroup: 'shoulders' },
+  { name: 'Plate-Loaded Leg Press', equipment: 'Plate-Loaded Leg Press', muscleGroup: 'legs' },
+  { name: 'Plate-Loaded Hack Squat', equipment: 'Plate-Loaded Hack Squat', muscleGroup: 'legs' },
+  { name: 'Plate-Loaded Seated Calf Raise', equipment: 'Plate-Loaded Seated Calf Raise', muscleGroup: 'legs' },
+  { name: 'Plate-Loaded Supine Bench Press', equipment: 'Plate-Loaded Supine Bench Press', muscleGroup: 'chest' },
+
+  // Free Weights & Cables
+  { name: 'Dumbbell Goblet Squat', equipment: 'Dumbbells (Up to 75 lbs)', muscleGroup: 'legs' },
+  { name: 'Dumbbell Shoulder Press', equipment: 'Dumbbells (Up to 75 lbs)', muscleGroup: 'shoulders' },
+  { name: 'Flat Bench Dumbbell Press', equipment: 'Flat Bench Press Benches', muscleGroup: 'chest' },
+  { name: 'Incline Dumbbell Press', equipment: 'Incline / Decline Adjustable Benches', muscleGroup: 'chest' },
+  { name: 'Fixed Barbell Bicep Curls', equipment: 'Fixed Barbells (Straight and EZ-Bar)', muscleGroup: 'arms' },
+  { name: 'Cable Lat Pulldown', equipment: 'Cable Towers (Lat Pulldown & Seated Row stations)', muscleGroup: 'back' },
+  { name: 'Cable Seated Row', equipment: 'Cable Towers (Lat Pulldown & Seated Row stations)', muscleGroup: 'back' },
+  { name: 'Dual Cable Chest Flyes', equipment: 'Dual Adjustable Cable Pulleys (Functional Trainers)', muscleGroup: 'chest' },
+  { name: 'Dual Cable Woodchoppers', equipment: 'Dual Adjustable Cable Pulleys (Functional Trainers)', muscleGroup: 'core' },
+
+  // Functional & Stretching Gear
+  { name: 'Kettlebell Swings', equipment: 'Kettlebells', muscleGroup: 'back' },
+  { name: 'Medicine Ball Slam', equipment: 'Medicine Balls', muscleGroup: 'core' },
+  { name: 'Battle Rope Waves', equipment: 'Battle Ropes', muscleGroup: 'cardio' },
+  { name: 'TRX Inverted Row', equipment: 'TRX Suspension Straps', muscleGroup: 'back' },
+  { name: 'Resistance Band Lateral Walk', equipment: 'Resistance Bands', muscleGroup: 'legs' },
+  { name: 'Foam Roller Recovery', equipment: 'Foam Rollers', muscleGroup: 'legs' },
+  { name: 'Mat Floor Core Circuit', equipment: 'Yoga & Exercise Mats', muscleGroup: 'core' },
+  { name: 'Ab Mat Crunches', equipment: 'Abs/Core Mats', muscleGroup: 'core' },
+  { name: 'Captain’s Chair Leg Raise', equipment: 'Captain’s Chair (Leg Raise Station)', muscleGroup: 'core' },
+  { name: 'Hyperextension Back Extension', equipment: 'Back Extension Bench', muscleGroup: 'back' },
 
 export default function App() {
   const [activeProfile, setActiveProfile] = useState<UserProfile>('Roxanne');
