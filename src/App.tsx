@@ -136,7 +136,7 @@ export default function App() {
     const fetchLogs = async () => {
       const { data } = await supabase.from('workout_logs').select('*');
       if (data && data.length > 0) {
-        const formatted: StrengthLog[] = data.map((d) => ({
+        const formatted: StrengthLog[] = data.map((d: any) => ({
           id: d.id,
           date: new Date(d.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
           profile: d.profile as UserProfile,
