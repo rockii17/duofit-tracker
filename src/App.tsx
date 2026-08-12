@@ -66,7 +66,6 @@ const PROFILE_STYLES = {
 };
 
 const GARAGE_POOL: ExerciseDef[] = [
-  // Bodyweight & Calisthenics
   { name: 'Push-ups', equipment: 'Bodyweight', muscleGroup: 'chest' },
   { name: 'Sit-ups', equipment: 'Bodyweight', muscleGroup: 'core' },
   { name: 'Air Squats', equipment: 'Bodyweight', muscleGroup: 'legs' },
@@ -76,7 +75,6 @@ const GARAGE_POOL: ExerciseDef[] = [
   { name: 'Burpees', equipment: 'Bodyweight', muscleGroup: 'cardio' },
   { name: 'Jumping Jacks', equipment: 'Bodyweight', muscleGroup: 'cardio' },
 
-  // Garage Heavy Equipment
   { name: 'Barbell Back Squat', equipment: 'Titan Power Rack & Bumper Plates', muscleGroup: 'legs' },
   { name: 'Goblet Squat', equipment: 'Hex Dumbbells / Kettlebell', muscleGroup: 'legs' },
   { name: 'Landmine Hack Squat', equipment: 'Titan Power Rack (Landmine)', muscleGroup: 'legs' },
@@ -103,7 +101,6 @@ const GARAGE_POOL: ExerciseDef[] = [
 ];
 
 const PLANET_FITNESS_POOL: ExerciseDef[] = [
-  // Bodyweight & Mat Exercises
   { name: 'Mat Push-ups', equipment: 'Bodyweight / Mat Area', muscleGroup: 'chest' },
   { name: 'Mat Sit-ups / Crunches', equipment: 'Bodyweight / Mat Area', muscleGroup: 'core' },
   { name: 'Bodyweight Air Squats', equipment: 'Bodyweight / Mat Area', muscleGroup: 'legs' },
@@ -112,7 +109,6 @@ const PLANET_FITNESS_POOL: ExerciseDef[] = [
   { name: 'Mountain Climbers', equipment: 'Bodyweight / Mat Area', muscleGroup: 'cardio' },
   { name: 'Jumping Jacks', equipment: 'Bodyweight / Mat Area', muscleGroup: 'cardio' },
 
-  // Cardio Machines
   { name: 'Treadmill Run / Walk', equipment: 'Treadmills', muscleGroup: 'cardio' },
   { name: 'Elliptical Striding', equipment: 'Ellipticals', muscleGroup: 'cardio' },
   { name: 'Arc Trainer Workout', equipment: 'Arc Trainers', muscleGroup: 'cardio' },
@@ -122,7 +118,6 @@ const PLANET_FITNESS_POOL: ExerciseDef[] = [
   { name: 'Recumbent Stepper Session', equipment: 'Recumbent Steppers (SciFit/NuStep)', muscleGroup: 'cardio' },
   { name: 'Upper Body Ergometer Cycle', equipment: 'Upper Body Ergometers (Arm Bikes)', muscleGroup: 'cardio' },
 
-  // Pin-Loaded Strength & Isolation
   { name: 'Machine Chest Press', equipment: 'Chest Press / Incline Chest Press', muscleGroup: 'chest' },
   { name: 'Incline Machine Press', equipment: 'Chest Press / Incline Chest Press', muscleGroup: 'chest' },
   { name: 'Pectoral Fly', equipment: 'Pectoral Fly / Rear Delt', muscleGroup: 'chest' },
@@ -144,7 +139,6 @@ const PLANET_FITNESS_POOL: ExerciseDef[] = [
   { name: 'Hip Adductor (Inner Thigh)', equipment: 'Hip Abductor / Hip Adductor', muscleGroup: 'legs' },
   { name: 'Machine Glute Drive', equipment: 'Glute Drive / Glute Kickback', muscleGroup: 'legs' },
 
-  // Plate-Loaded & Heavy Strength Equipment
   { name: 'Smith Machine Squat', equipment: 'Smith Machines', muscleGroup: 'legs' },
   { name: 'Smith Machine Bench Press', equipment: 'Smith Machines', muscleGroup: 'chest' },
   { name: 'Smith Machine Shoulder Press', equipment: 'Smith Machines', muscleGroup: 'shoulders' },
@@ -153,7 +147,6 @@ const PLANET_FITNESS_POOL: ExerciseDef[] = [
   { name: 'Plate-Loaded Seated Calf Raise', equipment: 'Plate-Loaded Seated Calf Raise', muscleGroup: 'legs' },
   { name: 'Plate-Loaded Supine Bench Press', equipment: 'Plate-Loaded Supine Bench Press', muscleGroup: 'chest' },
 
-  // Free Weights & Cables
   { name: 'Dumbbell Goblet Squat', equipment: 'Dumbbells (Up to 75 lbs)', muscleGroup: 'legs' },
   { name: 'Dumbbell Shoulder Press', equipment: 'Dumbbells (Up to 75 lbs)', muscleGroup: 'shoulders' },
   { name: 'Flat Bench Dumbbell Press', equipment: 'Flat Bench Press Benches', muscleGroup: 'chest' },
@@ -164,7 +157,6 @@ const PLANET_FITNESS_POOL: ExerciseDef[] = [
   { name: 'Dual Cable Chest Flyes', equipment: 'Dual Adjustable Cable Pulleys (Functional Trainers)', muscleGroup: 'chest' },
   { name: 'Dual Cable Woodchoppers', equipment: 'Dual Adjustable Cable Pulleys (Functional Trainers)', muscleGroup: 'core' },
 
-  // Functional & Stretching Gear
   { name: 'Kettlebell Swings', equipment: 'Kettlebells', muscleGroup: 'back' },
   { name: 'Medicine Ball Slam', equipment: 'Medicine Balls', muscleGroup: 'core' },
   { name: 'Battle Rope Waves', equipment: 'Battle Ropes', muscleGroup: 'cardio' },
@@ -199,16 +191,16 @@ export default function App() {
   useEffect(() => localStorage.setItem('duofit_cardio', JSON.stringify(cardioLogs)), [cardioLogs]);
   useEffect(() => localStorage.setItem('duofit_strength', JSON.stringify(strengthLogs)), [strengthLogs]);
 
-  // Live Supabase Sync
+  // Live Supabase Sync for Strength, Cardio, and Metrics
   useEffect(() => {
     if (!supabase) return;
 
-    const fetchLogs = async () => {
-      const { data } = await supabase.from('workout_logs').select('*');
-      if (data && data.length > 0) {
-        const formatted: StrengthLog[] = data.map((d: any) => ({
+    const fetchAllData = async () => {
+      const { data: strengthData } = await supabase.from('workout_logs').select('*');
+      if (strengthData) {
+        const formatted: StrengthLog[] = strengthData.map((d: any) => ({
           id: d.id,
-          date: new Date(d.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+          date: new Date(d.created_at || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
           profile: d.profile as UserProfile,
           location: d.location as LocationMode,
           routineName: d.routine_name,
@@ -216,15 +208,41 @@ export default function App() {
         }));
         setStrengthLogs(formatted);
       }
+
+      const { data: cardioData } = await supabase.from('cardio_logs').select('*');
+      if (cardioData) {
+        const formattedCardio: CardioLog[] = cardioData.map((d: any) => ({
+          id: d.id,
+          date: new Date(d.created_at || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+          profile: d.profile as UserProfile,
+          type: d.type,
+          distanceMiles: d.distance_miles,
+          durationMinutes: d.duration_minutes,
+          notes: d.notes,
+        }));
+        setCardioLogs(formattedCardio);
+      }
+
+      const { data: metricsData } = await supabase.from('metrics_logs').select('*');
+      if (metricsData) {
+        const formattedMetrics: BodyMetrics[] = metricsData.map((d: any) => ({
+          id: d.id,
+          date: new Date(d.created_at || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+          profile: d.profile as UserProfile,
+          weightLbs: d.weight_lbs,
+          heightInches: d.height_inches,
+        }));
+        setMetricsLogs(formattedMetrics);
+      }
     };
 
-    fetchLogs();
+    fetchAllData();
 
     const channel = supabase
-      .channel('workout_logs_changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'workout_logs' }, () => {
-        fetchLogs();
-      })
+      .channel('duofit_realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'workout_logs' }, () => fetchAllData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'cardio_logs' }, () => fetchAllData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'metrics_logs' }, () => fetchAllData())
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
@@ -375,10 +393,10 @@ export default function App() {
     }
   };
 
-  const handleAddCardio = (e: React.FormEvent) => {
+  const handleAddCardio = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!cardioDist || !cardioTime) return;
-    setCardioLogs([{
+    const newCardio: CardioLog = {
       id: Date.now().toString(),
       date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
       profile: activeProfile,
@@ -386,22 +404,48 @@ export default function App() {
       distanceMiles: parseFloat(cardioDist) || 0,
       durationMinutes: parseInt(cardioTime) || 0,
       notes: cardioNotes,
-    }, ...cardioLogs]);
+    };
+
+    setCardioLogs([newCardio, ...cardioLogs]);
+
+    if (supabase) {
+      await supabase.from('cardio_logs').insert([{
+        id: newCardio.id,
+        profile: newCardio.profile,
+        type: newCardio.type,
+        distance_miles: newCardio.distanceMiles,
+        duration_minutes: newCardio.durationMinutes,
+        notes: newCardio.notes,
+      }]);
+    }
+
     setCardioDist('');
     setCardioTime('');
     setCardioNotes('');
   };
 
-  const handleAddMetrics = (e: React.FormEvent) => {
+  const handleAddMetrics = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!weightInput) return;
-    setMetricsLogs([{
+    const newMetric: BodyMetrics = {
       id: Date.now().toString(),
       date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
       profile: activeProfile,
       weightLbs: parseFloat(weightInput) || 0,
       heightInches: parseFloat(heightInput) || 65,
-    }, ...metricsLogs]);
+    };
+
+    setMetricsLogs([newMetric, ...metricsLogs]);
+
+    if (supabase) {
+      await supabase.from('metrics_logs').insert([{
+        id: newMetric.id,
+        profile: newMetric.profile,
+        weight_lbs: newMetric.weightLbs,
+        height_inches: newMetric.heightInches,
+      }]);
+    }
+
     setWeightInput('');
   };
 
@@ -719,7 +763,6 @@ export default function App() {
                 )}
               </div>
 
-              {/* Last Session Tracker Badge */}
               {activeLastSession && (
                 <div style={{ background: 'rgba(16, 185, 129, 0.15)', border: '1px solid #10b981', padding: '8px 12px', borderRadius: '8px', fontSize: '11px', color: '#10b981', display: 'flex', justifyContent: 'space-between' }}>
                   <span>📌 <strong>Last Session ({activeLastSession.date}):</strong> {activeLastSession.weightLbs} lbs × {activeLastSession.reps} reps</span>
