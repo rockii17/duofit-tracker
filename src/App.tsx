@@ -75,7 +75,6 @@ const PROFILE_STYLES = {
 };
 
 const GARAGE_POOL: ExerciseDef[] = [
-  // Bodyweight & Calisthenics
   { name: 'Bodyweight Air Squats', equipment: 'Bodyweight', muscleGroup: 'legs' },
   { name: 'Walking Bodyweight Lunges', equipment: 'Bodyweight', muscleGroup: 'legs' },
   { name: 'Standard Push-Ups', equipment: 'Bodyweight', muscleGroup: 'chest' },
@@ -85,8 +84,6 @@ const GARAGE_POOL: ExerciseDef[] = [
   { name: 'Plank Hold / Side Plank', equipment: 'Bodyweight', muscleGroup: 'core' },
   { name: 'Hanging Leg Raises', equipment: 'Titan Power Rack', muscleGroup: 'core' },
   { name: 'Burpees / Mountain Climbers', equipment: 'Bodyweight', muscleGroup: 'cardio' },
-
-  // Heavy Equipment & Free Weights
   { name: 'Barbell Back Squat', equipment: 'Titan Power Rack & Bumper Plates', muscleGroup: 'legs' },
   { name: 'Goblet Squat', equipment: 'Hex Dumbbells / Kettlebell', muscleGroup: 'legs' },
   { name: 'Landmine Hack Squat', equipment: 'Titan Power Rack (Landmine)', muscleGroup: 'legs' },
@@ -113,7 +110,6 @@ const GARAGE_POOL: ExerciseDef[] = [
 ];
 
 const PLANET_FITNESS_POOL: ExerciseDef[] = [
-  // Bodyweight & Calisthenics
   { name: 'Bodyweight Air Squats', equipment: 'Bodyweight', muscleGroup: 'legs' },
   { name: 'Walking Bodyweight Lunges', equipment: 'Bodyweight', muscleGroup: 'legs' },
   { name: 'Standard Push-Ups', equipment: 'Bodyweight', muscleGroup: 'chest' },
@@ -122,70 +118,24 @@ const PLANET_FITNESS_POOL: ExerciseDef[] = [
   { name: 'Plank Hold / Side Plank', equipment: 'Yoga & Exercise Mats', muscleGroup: 'core' },
   { name: 'Mountain Climbers', equipment: 'Yoga & Exercise Mats', muscleGroup: 'cardio' },
   { name: 'Bodyweight Burpees', equipment: 'Bodyweight', muscleGroup: 'cardio' },
-
-  // Cardio Machines
   { name: 'Treadmill Run / Walk', equipment: 'Treadmills', muscleGroup: 'cardio' },
   { name: 'Elliptical Striding', equipment: 'Ellipticals', muscleGroup: 'cardio' },
   { name: 'Arc Trainer Workout', equipment: 'Arc Trainers', muscleGroup: 'cardio' },
   { name: 'StairMaster Climb', equipment: 'StairMaster Stepmills', muscleGroup: 'cardio' },
-  { name: 'Stationary Bike Ride', equipment: 'Stationary Bikes (Upright and Recumbent)', muscleGroup: 'cardio' },
+  { name: 'Stationary Bike Ride', equipment: 'Stationary Bikes', muscleGroup: 'cardio' },
   { name: 'Rowing Machine Intervals', equipment: 'Rowing Machines', muscleGroup: 'cardio' },
-  { name: 'Recumbent Stepper Session', equipment: 'Recumbent Steppers (SciFit/NuStep)', muscleGroup: 'cardio' },
-  { name: 'Upper Body Ergometer Cycle', equipment: 'Upper Body Ergometers (Arm Bikes)', muscleGroup: 'cardio' },
-
-  // Pin-Loaded Strength & Isolation
-  { name: 'Machine Chest Press', equipment: 'Chest Press / Incline Chest Press', muscleGroup: 'chest' },
-  { name: 'Incline Machine Press', equipment: 'Chest Press / Incline Chest Press', muscleGroup: 'chest' },
-  { name: 'Pectoral Fly', equipment: 'Pectoral Fly / Rear Delt', muscleGroup: 'chest' },
-  { name: 'Rear Delt Fly', equipment: 'Pectoral Fly / Rear Delt', muscleGroup: 'shoulders' },
+  { name: 'Machine Chest Press', equipment: 'Chest Press', muscleGroup: 'chest' },
   { name: 'Machine Shoulder Press', equipment: 'Shoulder Press', muscleGroup: 'shoulders' },
-  { name: 'Machine Lateral Raise', equipment: 'Lateral Raise', muscleGroup: 'shoulders' },
   { name: 'Machine Lat Pulldown', equipment: 'Lat Pulldown', muscleGroup: 'back' },
   { name: 'Machine Seated Row', equipment: 'Seated Row', muscleGroup: 'back' },
-  { name: 'Machine Bicep Curl', equipment: 'Bicep Curl', muscleGroup: 'arms' },
-  { name: 'Machine Tricep Extension', equipment: 'Tricep Extension / Tricep Press', muscleGroup: 'arms' },
-  { name: 'Assisted Dip', equipment: 'Assisted Dip and Chin-Up', muscleGroup: 'arms' },
-  { name: 'Assisted Chin-Up', equipment: 'Assisted Dip and Chin-Up', muscleGroup: 'back' },
-  { name: 'Abdominal Crunch Machine', equipment: 'Abdominal Crunch / Rotary Torso', muscleGroup: 'core' },
-  { name: 'Rotary Torso Twist', equipment: 'Abdominal Crunch / Rotary Torso', muscleGroup: 'core' },
-  { name: 'Seated Leg Extension', equipment: 'Leg Extension', muscleGroup: 'legs' },
-  { name: 'Seated / Lying Leg Curl', equipment: 'Seated Leg Curl / Lying Leg Curl', muscleGroup: 'legs' },
   { name: 'Seated Leg Press', equipment: 'Leg Press', muscleGroup: 'legs' },
-  { name: 'Hip Abductor (Outer Thigh)', equipment: 'Hip Abductor / Hip Adductor', muscleGroup: 'legs' },
-  { name: 'Hip Adductor (Inner Thigh)', equipment: 'Hip Abductor / Hip Adductor', muscleGroup: 'legs' },
-  { name: 'Machine Glute Drive', equipment: 'Glute Drive / Glute Kickback', muscleGroup: 'legs' },
-
-  // Plate-Loaded & Heavy Strength Equipment
+  { name: 'Seated Leg Extension', equipment: 'Leg Extension', muscleGroup: 'legs' },
+  { name: 'Seated / Lying Leg Curl', equipment: 'Leg Curl', muscleGroup: 'legs' },
   { name: 'Smith Machine Squat', equipment: 'Smith Machines', muscleGroup: 'legs' },
   { name: 'Smith Machine Bench Press', equipment: 'Smith Machines', muscleGroup: 'chest' },
-  { name: 'Smith Machine Shoulder Press', equipment: 'Smith Machines', muscleGroup: 'shoulders' },
-  { name: 'Plate-Loaded Leg Press', equipment: 'Plate-Loaded Leg Press', muscleGroup: 'legs' },
-  { name: 'Plate-Loaded Hack Squat', equipment: 'Plate-Loaded Hack Squat', muscleGroup: 'legs' },
-  { name: 'Plate-Loaded Seated Calf Raise', equipment: 'Plate-Loaded Seated Calf Raise', muscleGroup: 'legs' },
-  { name: 'Plate-Loaded Supine Bench Press', equipment: 'Plate-Loaded Supine Bench Press', muscleGroup: 'chest' },
-
-  // Free Weights & Cables
-  { name: 'Dumbbell Goblet Squat', equipment: 'Dumbbells (Up to 75 lbs)', muscleGroup: 'legs' },
-  { name: 'Dumbbell Shoulder Press', equipment: 'Dumbbells (Up to 75 lbs)', muscleGroup: 'shoulders' },
+  { name: 'Dumbbell Goblet Squat', equipment: 'Dumbbells', muscleGroup: 'legs' },
   { name: 'Flat Bench Dumbbell Press', equipment: 'Flat Bench Press Benches', muscleGroup: 'chest' },
-  { name: 'Incline Dumbbell Press', equipment: 'Incline / Decline Adjustable Benches', muscleGroup: 'chest' },
-  { name: 'Fixed Barbell Bicep Curls', equipment: 'Fixed Barbells (Straight and EZ-Bar)', muscleGroup: 'arms' },
-  { name: 'Cable Lat Pulldown', equipment: 'Cable Towers (Lat Pulldown & Seated Row stations)', muscleGroup: 'back' },
-  { name: 'Cable Seated Row', equipment: 'Cable Towers (Lat Pulldown & Seated Row stations)', muscleGroup: 'back' },
-  { name: 'Dual Cable Chest Flyes', equipment: 'Dual Adjustable Cable Pulleys (Functional Trainers)', muscleGroup: 'chest' },
-  { name: 'Dual Cable Woodchoppers', equipment: 'Dual Adjustable Cable Pulleys (Functional Trainers)', muscleGroup: 'core' },
-
-  // Functional & Stretching Gear
-  { name: 'Kettlebell Swings', equipment: 'Kettlebells', muscleGroup: 'back' },
-  { name: 'Medicine Ball Slam', equipment: 'Medicine Balls', muscleGroup: 'core' },
-  { name: 'Battle Rope Waves', equipment: 'Battle Ropes', muscleGroup: 'cardio' },
-  { name: 'TRX Inverted Row', equipment: 'TRX Suspension Straps', muscleGroup: 'back' },
-  { name: 'Resistance Band Lateral Walk', equipment: 'Resistance Bands', muscleGroup: 'legs' },
-  { name: 'Foam Roller Recovery', equipment: 'Foam Rollers', muscleGroup: 'legs' },
-  { name: 'Mat Floor Core Circuit', equipment: 'Yoga & Exercise Mats', muscleGroup: 'core' },
-  { name: 'Ab Mat Crunches', equipment: 'Abs/Core Mats', muscleGroup: 'core' },
-  { name: 'Captains Chair Leg Raise', equipment: 'Captain Chair Leg Raise Station', muscleGroup: 'core' },
-  { name: 'Hyperextension Back Extension', equipment: 'Back Extension Bench', muscleGroup: 'back' },
+  { name: 'Cable Lat Pulldown', equipment: 'Cable Towers', muscleGroup: 'back' },
 ];
 
 export const TabataTimer: React.FC<TabataTimerProps> = ({
@@ -202,7 +152,7 @@ export const TabataTimer: React.FC<TabataTimerProps> = ({
   const [isActive, setIsActive] = useState<boolean>(false);
 
   useEffect(() => {
-    let timer: NodeJS.Timeout | null = null;
+    let timer: ReturnType<typeof setInterval> | null = null;
 
     if (isActive && phase !== 'completed') {
       timer = setInterval(() => {
@@ -542,9 +492,11 @@ export default function App() {
     setWeightInput('');
   };
 
+  const muscleList: MuscleTarget[] = ['legs', 'back', 'chest', 'shoulders', 'arms', 'core', 'cardio'];
+
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#111827', color: '#f3f4f6', fontFamily: 'sans-serif', padding: '1rem' }}>
-      {/* Profile & Format Options Header */}
+      {/* Profile Header */}
       <div style={{ maxWidth: '800px', margin: '0 auto 1.5rem auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h2>Fitness Tracker</h2>
         <div>
@@ -570,7 +522,7 @@ export default function App() {
       </div>
 
       {/* Navigation Tabs */}
-      <div style={{ maxWidth: '800px', margin: '0 auto 1.5rem auto', display: 'flex', gap: '0.5rem', borderBottom: '1px solid #374151', pb: '0.5rem' }}>
+      <div style={{ maxWidth: '800px', margin: '0 auto 1.5rem auto', display: 'flex', gap: '0.5rem', borderBottom: '1px solid #374151', paddingBottom: '0.5rem' }}>
         {(['generator', 'workout', 'cardio', 'metrics', 'history'] as const).map((tab) => (
           <button
             key={tab}
@@ -597,7 +549,98 @@ export default function App() {
           <div>
             <h3>Generator Options</h3>
             <div style={{ marginBottom: '1rem' }}>
-              <label>Format: </label>
+              <label style={{ marginRight: '0.5rem' }}>Location:</label>
+              {(['garage', 'planet_fitness'] as LocationMode[]).map((loc) => (
+                <button
+                  key={loc}
+                  onClick={() => setLocationMode(loc)}
+                  style={{
+                    padding: '0.25rem 0.75rem',
+                    marginRight: '0.5rem',
+                    borderRadius: '4px',
+                    border: 'none',
+                    backgroundColor: locationMode === loc ? theme.primary : '#374151',
+                    color: '#fff',
+                    textTransform: 'capitalize',
+                    cursor: 'pointer'
+                  }}
+                >
+                  {loc.replace('_', ' ')}
+                </button>
+              ))}
+            </div>
+
+            <div style={{ marginBottom: '1rem' }}>
+              <label style={{ marginRight: '0.5rem' }}>Filter Mode:</label>
+              {(['muscle', 'equipment'] as FilterMode[]).map((mode) => (
+                <button
+                  key={mode}
+                  onClick={() => setFilterMode(mode)}
+                  style={{
+                    padding: '0.25rem 0.75rem',
+                    marginRight: '0.5rem',
+                    borderRadius: '4px',
+                    border: 'none',
+                    backgroundColor: filterMode === mode ? theme.primary : '#374151',
+                    color: '#fff',
+                    textTransform: 'capitalize',
+                    cursor: 'pointer'
+                  }}
+                >
+                  {mode}
+                </button>
+              ))}
+            </div>
+
+            {filterMode === 'muscle' ? (
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{ display: 'block', marginBottom: '0.5rem' }}>Target Muscles:</label>
+                {muscleList.map((m) => (
+                  <button
+                    key={m}
+                    onClick={() => toggleMuscle(m)}
+                    style={{
+                      padding: '0.25rem 0.5rem',
+                      marginRight: '0.5rem',
+                      marginBottom: '0.5rem',
+                      borderRadius: '4px',
+                      border: 'none',
+                      backgroundColor: selectedMuscles.includes(m) ? theme.primary : '#374151',
+                      color: '#fff',
+                      textTransform: 'capitalize',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    {m}
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{ display: 'block', marginBottom: '0.5rem' }}>Available Equipment:</label>
+                {availableEquipmentList.map((eq) => (
+                  <button
+                    key={eq}
+                    onClick={() => toggleEquipment(eq)}
+                    style={{
+                      padding: '0.25rem 0.5rem',
+                      marginRight: '0.5rem',
+                      marginBottom: '0.5rem',
+                      borderRadius: '4px',
+                      border: 'none',
+                      backgroundColor: selectedEquipment.includes(eq) ? theme.primary : '#374151',
+                      color: '#fff',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    {eq}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            <div style={{ marginBottom: '1rem' }}>
+              <label style={{ marginRight: '0.5rem' }}>Format:</label>
               {(['standard', 'emom', 'amrap', 'pyramid', 'tabata'] as WorkoutFormat[]).map((fmt) => (
                 <button
                   key={fmt}
@@ -648,7 +691,51 @@ export default function App() {
             {selectedFormat === 'tabata' && (
               <TabataTimer exerciseName={activeRoutineName} themeColor={theme.primary} />
             )}
-            {/* Standard exercise logging inputs remain available */}
+
+            <div style={{ backgroundColor: '#1f2937', padding: '1rem', borderRadius: '8px', marginTop: '1rem' }}>
+              <h4>Log Exercise Set</h4>
+              <input
+                placeholder="Exercise Name"
+                value={exName}
+                onChange={(e) => setExName(e.target.value)}
+                style={{ width: '100%', padding: '0.5rem', marginBottom: '0.5rem', borderRadius: '4px', border: '1px solid #4b5563', backgroundColor: '#374151', color: '#fff' }}
+              />
+              <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                <input
+                  placeholder="Weight (lbs)"
+                  value={exWeight}
+                  onChange={(e) => setExWeight(e.target.value)}
+                  style={{ flex: 1, padding: '0.5rem', borderRadius: '4px', border: '1px solid #4b5563', backgroundColor: '#374151', color: '#fff' }}
+                />
+                <input
+                  placeholder="Reps"
+                  value={exReps}
+                  onChange={(e) => setExReps(e.target.value)}
+                  style={{ flex: 1, padding: '0.5rem', borderRadius: '4px', border: '1px solid #4b5563', backgroundColor: '#374151', color: '#fff' }}
+                />
+                {locationMode === 'planet_fitness' && (
+                  <input
+                    placeholder="Seat Settings"
+                    value={exSeat}
+                    onChange={(e) => setExSeat(e.target.value)}
+                    style={{ flex: 1, padding: '0.5rem', borderRadius: '4px', border: '1px solid #4b5563', backgroundColor: '#374151', color: '#fff' }}
+                  />
+                )}
+              </div>
+              <button onClick={handleAddSet} style={{ padding: '0.5rem 1rem', backgroundColor: theme.primary, border: 'none', color: '#fff', borderRadius: '6px', cursor: 'pointer' }}>Add Set</button>
+
+              {currentSessionSets.length > 0 && (
+                <div style={{ marginTop: '1rem' }}>
+                  <h5>Logged Sets:</h5>
+                  {currentSessionSets.map((s) => (
+                    <div key={s.id} style={{ fontSize: '0.9rem', color: '#d1d5db' }}>
+                      • {s.exerciseName}: {s.weightLbs} lbs × {s.reps} reps {s.seatSetting ? `(Seat: ${s.seatSetting})` : ''}
+                    </div>
+                  ))}
+                  <button onClick={handleSaveWorkout} style={{ marginTop: '1rem', padding: '0.5rem 1rem', backgroundColor: '#22c55e', border: 'none', color: '#fff', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}>Save Workout Session</button>
+                </div>
+              )}
+            </div>
           </div>
         )}
 
@@ -660,7 +747,7 @@ export default function App() {
             
             <form onSubmit={handleAddCardio} style={{ backgroundColor: '#1f2937', padding: '1rem', borderRadius: '8px', marginTop: '1.5rem' }}>
               <h4>Log Cardio Session</h4>
-              <select value={cardioType} onChange={(e) => setCardioType(e.target.value as any)} style={{ padding: '0.5rem', marginBottom: '0.5rem', width: '100%' }}>
+              <select value={cardioType} onChange={(e) => setCardioType(e.target.value as any)} style={{ padding: '0.5rem', marginBottom: '0.5rem', width: '100%', borderRadius: '4px', border: '1px solid #4b5563', backgroundColor: '#374151', color: '#fff' }}>
                 <option value="Run">Run</option>
                 <option value="Walk">Walk</option>
                 <option value="Tabata">Tabata</option>
@@ -669,9 +756,87 @@ export default function App() {
                 <option value="Elliptical">Elliptical</option>
                 <option value="StairMaster">StairMaster</option>
               </select>
-              <input placeholder="Minutes" value={cardioTime} onChange={(e) => setCardioTime(e.target.value)} style={{ padding: '0.5rem', marginBottom: '0.5rem', width: '100%' }} />
+              <input placeholder="Distance (Miles)" value={cardioDist} onChange={(e) => setCardioDist(e.target.value)} style={{ padding: '0.5rem', marginBottom: '0.5rem', width: '100%', borderRadius: '4px', border: '1px solid #4b5563', backgroundColor: '#374151', color: '#fff' }} />
+              <input placeholder="Duration (Minutes)" value={cardioTime} onChange={(e) => setCardioTime(e.target.value)} style={{ padding: '0.5rem', marginBottom: '0.5rem', width: '100%', borderRadius: '4px', border: '1px solid #4b5563', backgroundColor: '#374151', color: '#fff' }} />
+              <input placeholder="Notes / Effort" value={cardioNotes} onChange={(e) => setCardioNotes(e.target.value)} style={{ padding: '0.5rem', marginBottom: '0.5rem', width: '100%', borderRadius: '4px', border: '1px solid #4b5563', backgroundColor: '#374151', color: '#fff' }} />
               <button type="submit" style={{ padding: '0.5rem 1rem', backgroundColor: theme.primary, border: 'none', color: '#fff', borderRadius: '6px', cursor: 'pointer' }}>Save Cardio Log</button>
             </form>
+          </div>
+        )}
+
+        {/* Body Metrics View */}
+        {activeTab === 'metrics' && (
+          <div>
+            <h3>Body Metrics</h3>
+            <form onSubmit={handleAddMetrics} style={{ backgroundColor: '#1f2937', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem' }}>
+              <h4>Log Metrics</h4>
+              <input placeholder="Weight (lbs)" value={weightInput} onChange={(e) => setWeightInput(e.target.value)} style={{ padding: '0.5rem', marginBottom: '0.5rem', width: '100%', borderRadius: '4px', border: '1px solid #4b5563', backgroundColor: '#374151', color: '#fff' }} />
+              <input placeholder="Height (Inches)" value={heightInput} onChange={(e) => setHeightInput(e.target.value)} style={{ padding: '0.5rem', marginBottom: '0.5rem', width: '100%', borderRadius: '4px', border: '1px solid #4b5563', backgroundColor: '#374151', color: '#fff' }} />
+              <button type="submit" style={{ padding: '0.5rem 1rem', backgroundColor: theme.primary, border: 'none', color: '#fff', borderRadius: '6px', cursor: 'pointer' }}>Save Metrics</button>
+            </form>
+
+            <h4>Metrics History</h4>
+            {metricsLogs.map((m) => (
+              <div key={m.id} style={{ backgroundColor: '#1f2937', padding: '0.75rem', borderRadius: '6px', marginBottom: '0.5rem' }}>
+                <strong>{m.date}</strong> [{m.profile}]: {m.weightLbs} lbs ({m.heightInches} in)
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* History View */}
+        {activeTab === 'history' && (
+          <div>
+            <h3>Logged Workout History</h3>
+            {strengthLogs.length === 0 ? (
+              <p>No strength workouts recorded yet.</p>
+            ) : (
+              strengthLogs.map((log) => (
+                <div key={log.id} style={{ backgroundColor: '#1f2937', padding: '1rem', borderRadius: '8px', marginBottom: '1rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                    <strong>{log.date} - {log.routineName} ({log.profile})</strong>
+                    <div>
+                      <button onClick={() => setEditingLogId(editingLogId === log.id ? null : log.id)} style={{ marginRight: '0.5rem', padding: '0.25rem 0.5rem', backgroundColor: '#3b82f6', border: 'none', color: '#fff', borderRadius: '4px', cursor: 'pointer' }}>
+                        {editingLogId === log.id ? 'Done' : 'Edit'}
+                      </button>
+                      <button onClick={() => handleDeleteLog(log.id)} style={{ padding: '0.25rem 0.5rem', backgroundColor: '#ef4444', border: 'none', color: '#fff', borderRadius: '4px', cursor: 'pointer' }}>Delete</button>
+                    </div>
+                  </div>
+                  {log.sets.map((s) => (
+                    <div key={s.id} style={{ fontSize: '0.9rem', color: '#9ca3af', marginBottom: '0.25rem' }}>
+                      {editingLogId === log.id ? (
+                        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                          <span>{s.exerciseName}:</span>
+                          <input
+                            type="number"
+                            defaultValue={s.weightLbs}
+                            onChange={(e) => handleUpdateLogSet(log.id, s.id, parseFloat(e.target.value) || 0, s.reps)}
+                            style={{ width: '60px', padding: '0.2rem', backgroundColor: '#374151', color: '#fff', border: '1px solid #4b5563', borderRadius: '4px' }}
+                          />
+                          <span>lbs ×</span>
+                          <input
+                            type="number"
+                            defaultValue={s.reps}
+                            onChange={(e) => handleUpdateLogSet(log.id, s.id, s.weightLbs, parseInt(e.target.value) || 0)}
+                            style={{ width: '50px', padding: '0.2rem', backgroundColor: '#374151', color: '#fff', border: '1px solid #4b5563', borderRadius: '4px' }}
+                          />
+                          <span>reps</span>
+                        </div>
+                      ) : (
+                        <span>• {s.exerciseName}: {s.weightLbs} lbs × {s.reps} reps {s.seatSetting ? `(Seat: ${s.seatSetting})` : ''}</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ))
+            )}
+
+            <h3>Logged Cardio History</h3>
+            {cardioLogs.map((c) => (
+              <div key={c.id} style={{ backgroundColor: '#1f2937', padding: '0.75rem', borderRadius: '6px', marginBottom: '0.5rem' }}>
+                <strong>{c.date}</strong> [{c.profile}] - {c.type}: {c.durationMinutes} mins {c.distanceMiles ? `(${c.distanceMiles} mi)` : ''} {c.notes ? `- ${c.notes}` : ''}
+              </div>
+            ))}
           </div>
         )}
       </div>
