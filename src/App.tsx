@@ -823,65 +823,67 @@ export default function App() {
 
         {activeTab === 'history' && (
           <section style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <h3 style={{ fontSize: '14px', fontWeight: 'bold', color: '#94a3b8', margin: 0 }}>Editable Log History</h3>
-            {strengthLogs.map((log) => {
-              const style = PROFILE_STYLES[log.profile];
-              const isEditing = editingLogId === log.id;
+            <h3 style={{ fontSize: '14px', fontWeight: 'bold', color: '#94a3b8', margin: 0 }}>Editable Log History ({activeProfile})</h3>
+            {strengthLogs
+              .filter((log) => log.profile === activeProfile)
+              .map((log) => {
+                const style = PROFILE_STYLES[log.profile];
+                const isEditing = editingLogId === log.id;
 
-              return (
-                <div key={log.id} style={{ background: '#1e293b', padding: '12px', borderRadius: '12px', border: `1px solid ${style.border}` }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', fontWeight: 'bold', color: style.accent }}>
-                    <span>🏋️ {log.routineName} ({log.profile})</span>
-                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                      <span style={{ color: '#94a3b8', fontSize: '10px' }}>{log.date}</span>
-                      <button
-                        onClick={() => setEditingLogId(isEditing ? null : log.id)}
-                        style={{ background: '#334155', border: 'none', color: '#f59e0b', fontSize: '10px', padding: '4px 6px', borderRadius: '4px', cursor: 'pointer' }}
-                      >
-                        {isEditing ? 'Done' : '✏️ Edit'}
-                      </button>
-                      <button
-                        onClick={() => handleDeleteLog(log.id)}
-                        style={{ background: '#451a1a', border: '1px solid #ef4444', color: '#ef4444', fontSize: '10px', padding: '4px 6px', borderRadius: '4px', cursor: 'pointer' }}
-                      >
-                        🗑️ Delete
-                      </button>
+                return (
+                  <div key={log.id} style={{ background: '#1e293b', padding: '12px', borderRadius: '12px', border: `1px solid ${style.border}` }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', fontWeight: 'bold', color: style.accent }}>
+                      <span>🏋️ {log.routineName} ({log.profile})</span>
+                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                        <span style={{ color: '#94a3b8', fontSize: '10px' }}>{log.date}</span>
+                        <button
+                          onClick={() => setEditingLogId(isEditing ? null : log.id)}
+                          style={{ background: '#334155', border: 'none', color: '#f59e0b', fontSize: '10px', padding: '4px 6px', borderRadius: '4px', cursor: 'pointer' }}
+                        >
+                          {isEditing ? 'Done' : '✏️ Edit'}
+                        </button>
+                        <button
+                          onClick={() => handleDeleteLog(log.id)}
+                          style={{ background: '#451a1a', border: '1px solid #ef4444', color: '#ef4444', fontSize: '10px', padding: '4px 6px', borderRadius: '4px', cursor: 'pointer' }}
+                        >
+                          🗑️ Delete
+                        </button>
+                      </div>
+                    </div>
+
+                    <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      {log.sets.map((set) => (
+                        <div key={set.id} style={{ fontSize: '11px', color: '#cbd5e1', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span>• {set.exerciseName} {set.seatSetting && `[Seat: ${set.seatSetting}]`}</span>
+
+                          {isEditing ? (
+                            <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                              <input
+                                type="number"
+                                defaultValue={set.weightLbs}
+                                onChange={(e) => handleUpdateLogSet(log.id, set.id, parseFloat(e.target.value) || 0, set.reps)}
+                                style={{ width: '50px', background: '#0f172a', border: '1px solid #334155', color: '#fff', fontSize: '10px', padding: '2px 4px', borderRadius: '4px' }}
+                              />
+                              <span>lbs x</span>
+                              <input
+                                type="number"
+                                defaultValue={set.reps}
+                                onChange={(e) => handleUpdateLogSet(log.id, set.id, set.weightLbs, parseInt(e.target.value) || 0)}
+                                style={{ width: '40px', background: '#0f172a', border: '1px solid #334155', color: '#fff', fontSize: '10px', padding: '2px 4px', borderRadius: '4px' }}
+                              />
+                              <span>reps</span>
+                            </div>
+                          ) : (
+                            <span style={{ fontWeight: 'bold', color: '#f8fafc' }}>
+                              {set.weightLbs > 0 ? `${set.weightLbs} lbs` : 'Bodyweight'} × {set.reps} reps
+                            </span>
+                          )}
+                        </div>
+                      ))}
                     </div>
                   </div>
-
-                  <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                    {log.sets.map((set) => (
-                      <div key={set.id} style={{ fontSize: '11px', color: '#cbd5e1', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span>• {set.exerciseName} {set.seatSetting && `[Seat: ${set.seatSetting}]`}</span>
-
-                        {isEditing ? (
-                          <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
-                            <input
-                              type="number"
-                              defaultValue={set.weightLbs}
-                              onChange={(e) => handleUpdateLogSet(log.id, set.id, parseFloat(e.target.value) || 0, set.reps)}
-                              style={{ width: '50px', background: '#0f172a', border: '1px solid #334155', color: '#fff', fontSize: '10px', padding: '2px 4px', borderRadius: '4px' }}
-                            />
-                            <span>lbs x</span>
-                            <input
-                              type="number"
-                              defaultValue={set.reps}
-                              onChange={(e) => handleUpdateLogSet(log.id, set.id, set.weightLbs, parseInt(e.target.value) || 0)}
-                              style={{ width: '40px', background: '#0f172a', border: '1px solid #334155', color: '#fff', fontSize: '10px', padding: '2px 4px', borderRadius: '4px' }}
-                            />
-                            <span>reps</span>
-                          </div>
-                        ) : (
-                          <span style={{ fontWeight: 'bold', color: '#f8fafc' }}>
-                            {set.weightLbs > 0 ? `${set.weightLbs} lbs` : 'Bodyweight'} × {set.reps} reps
-                          </span>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })}
           </section>
         )}
 
