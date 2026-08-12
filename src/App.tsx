@@ -1,18 +1,39 @@
-import React, { useState, useEffect } from 'react';
-
 // --- SUPABASE CONFIGURATION ---
 const SUPABASE_URL = "https://opnyvfzkkjzxyyrvgoeb.supabase.co";
 const SUPABASE_KEY = "sb_publishable_g_ly5yGvBkLzTBW1k-1iLg_9VBZDKny";
 
-const headers = {
+const headers: Record<string, string> = {
   "apikey": SUPABASE_KEY,
   "Authorization": `Bearer ${SUPABASE_KEY}`,
   "Content-Type": "application/json",
   "Prefer": "return=representation"
 };
 
+export interface Exercise {
+  name: string;
+  category: string;
+  location: string[];
+  sets?: number;
+  reps?: number;
+  rest?: string;
+  completedSets?: number;
+  weightInput?: string;
+  repsInput?: string;
+}
+
+export interface WorkoutLog {
+  id: string;
+  created_at: string;
+  profile: string;
+  exercise_name: string;
+  weight_lbs: number;
+  reps: number;
+  sets: number;
+  workout_format?: string;
+}
+
 // --- EXERCISE DATABASE ---
-const EXERCISE_POOL = {
+const EXERCISE_POOL: Record<string, Exercise[]> = {
   Chest: [
     { name: "Barbell Bench Press", category: "Chest", location: ["Garage Gym", "Planet Fitness"] },
     { name: "Incline Dumbbell Press", category: "Chest", location: ["Garage Gym", "Planet Fitness"] },
@@ -58,25 +79,25 @@ const EXERCISE_POOL = {
 };
 
 export default function DuoFitEngine() {
-  const [profile, setProfile] = useState('Roxanne');
-  const [locationMode, setLocationMode] = useState('Garage Gym');
-  const [activeTab, setActiveTab] = useState('Builder');
+  const [profile, setProfile] = useState<'Roxanne' | 'Diana'>('Roxanne');
+  const [locationMode, setLocationMode] = useState<'Garage Gym' | 'Planet Fitness'>('Garage Gym');
+  const [activeTab, setActiveTab] = useState<'Builder' | 'Active' | 'History'>('Builder');
 
   // Generator selections
-  const [selectedMuscles, setSelectedMuscles] = useState(['Chest', 'Triceps']);
-  const [workoutFormat, setWorkoutFormat] = useState('Standard (3x10)');
-  const [generatedRoutine, setGeneratedRoutine] = useState([]);
+  const [selectedMuscles, setSelectedMuscles] = useState<string[]>(['Chest', 'Arms']);
+  const [workoutFormat, setWorkoutFormat] = useState<string>('Standard (3x10)');
+  const [generatedRoutine, setGeneratedRoutine] = useState<Exercise[]>([]);
 
   // Database logs
-  const [logs, setLogs] = useState([]);
-  const [editingLogId, setEditingLogId] = useState(null);
-  const [editForm, setEditForm] = useState({ weight_lbs: '', reps: '', sets: '' });
+  const [logs, setLogs] = useState<WorkoutLog[]>([]);
+  const [editingLogId, setEditingLogId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState<{ weight_lbs: string; reps: string; sets: string }>({ weight_lbs: '', reps: '', sets: '' });
 
   // Load logs from Supabase
-  const fetchLogs = async () => {
+  const fetchLogs = async (): Promise<void> => {
     try {
       const res = await fetch(`${SUPABASE_URL}/rest/v1/workout_logs?select=*&order=created_at.desc`, { headers });
-      const data = await res.json();
+      const data: WorkoutLog[] = await res.json();
       if (Array.isArray(data)) setLogs(data);
     } catch (err) {
       console.error("Failed to load workout logs:", err);
@@ -87,29 +108,26 @@ export default function DuoFitEngine() {
     fetchLogs();
   }, []);
 
-  // Primary Theme Colors
   const themeColor = profile === 'Roxanne' ? '#ff6b00' : '#8a2be2';
 
-  // Toggle Muscle Group Selection
-  const toggleMuscle = (muscle) => {
+  const toggleMuscle = (muscle: string): void => {
     if (selectedMuscles.includes(muscle)) {
-      setSelectedMuscles(selectedMuscles.filter(m => m !== muscle));
+      setSelectedMuscles(selectedMuscles.filter((m: string) => m !== muscle));
     } else {
       setSelectedMuscles([...selectedMuscles, muscle]);
     }
   };
 
-  // Generate Workout Plan
-  const generateWorkout = () => {
+  const generateWorkout = (): void => {
     if (selectedMuscles.length === 0) return;
 
-    let routine = [];
-    selectedMuscles.forEach(muscle => {
-      const categoryPool = EXERCISE_POOL[muscle] || EXERCISE_POOL['Arms'] || [];
-      const valid = categoryPool.filter(e => e.location.includes(locationMode));
+    const routine: Exercise[] = [];
+    selectedMuscles.forEach((muscle: string) => {
+      const categoryPool: Exercise[] = EXERCISE_POOL[muscle] || EXERCISE_POOL['Arms'] || [];
+      const valid: Exercise[] = categoryPool.filter((e: Exercise) => e.location.includes(locationMode));
       if (valid.length > 0) {
-        const randomEx = valid[Math.floor(Math.random() * valid.length)];
-        if (!routine.some(r => r.name === randomEx.name)) {
+        const randomEx: Exercise = valid[Math.floor(Math.random() * valid.length)];
+        if (!routine.some((r: Exercise) => r.name === randomEx.name)) {
           routine.push({
             ...randomEx,
             sets: 3,
@@ -127,36 +145,34 @@ export default function DuoFitEngine() {
     setActiveTab('Active');
   };
 
-  // Swap Single Exercise
-  const swapExercise = (index) => {
-    const item = generatedRoutine[index];
-    const categoryPool = EXERCISE_POOL[item.category] || [];
-    const valid = categoryPool.filter(e => e.location.includes(locationMode) && e.name !== item.name);
+  const swapExercise = (index: number): void => {
+    const item: Exercise = generatedRoutine[index];
+    if (!item) return;
+    const categoryPool: Exercise[] = EXERCISE_POOL[item.category] || [];
+    const valid: Exercise[] = categoryPool.filter((e: Exercise) => e.location.includes(locationMode) && e.name !== item.name);
 
     if (valid.length > 0) {
-      const newEx = valid[Math.floor(Math.random() * valid.length)];
-      const updated = [...generatedRoutine];
+      const newEx: Exercise = valid[Math.floor(Math.random() * valid.length)];
+      const updated: Exercise[] = [...generatedRoutine];
       updated[index] = { ...item, name: newEx.name };
       setGeneratedRoutine(updated);
     }
   };
 
-  // Get Last Session Metrics for standard display
-  const getLastSession = (exerciseName) => {
-    const match = logs.find(l => l.exercise_name === exerciseName && l.profile === profile);
+  const getLastSession = (exerciseName: string): string | null => {
+    const match: WorkoutLog | undefined = logs.find((l: WorkoutLog) => l.exercise_name === exerciseName && l.profile === profile);
     if (!match) return null;
     return `${match.weight_lbs || 0} lbs × ${match.reps} reps (${new Date(match.created_at).toLocaleDateString()})`;
   };
 
-  // Save Workout Log Entry
-  const handleLogSet = async (exercise) => {
+  const handleLogSet = async (exercise: Exercise): Promise<void> => {
     if (!exercise.weightInput || !exercise.repsInput) return;
 
     const payload = {
       profile: profile,
       exercise_name: exercise.name,
       weight_lbs: parseFloat(exercise.weightInput),
-      reps: parseInt(exercise.repsInput),
+      reps: parseInt(exercise.repsInput, 10),
       sets: 1,
       workout_format: workoutFormat
     };
@@ -176,21 +192,20 @@ export default function DuoFitEngine() {
     }
   };
 
-  // Edit Log
-  const startEdit = (log) => {
+  const startEdit = (log: WorkoutLog): void => {
     setEditingLogId(log.id);
-    setEditForm({ weight_lbs: log.weight_lbs, reps: log.reps, sets: log.sets });
+    setEditForm({ weight_lbs: String(log.weight_lbs), reps: String(log.reps), sets: String(log.sets) });
   };
 
-  const saveEdit = async (id) => {
+  const saveEdit = async (id: string): Promise<void> => {
     try {
       const res = await fetch(`${SUPABASE_URL}/rest/v1/workout_logs?id=eq.${id}`, {
         method: 'PATCH',
         headers,
         body: JSON.stringify({
           weight_lbs: parseFloat(editForm.weight_lbs),
-          reps: parseInt(editForm.reps),
-          sets: parseInt(editForm.sets)
+          reps: parseInt(editForm.reps, 10),
+          sets: parseInt(editForm.sets, 10)
         })
       });
       if (res.ok) {
@@ -202,8 +217,7 @@ export default function DuoFitEngine() {
     }
   };
 
-  // Delete Log
-  const deleteLog = async (id) => {
+  const deleteLog = async (id: string): Promise<void> => {
     if (!confirm("Delete this log entry?")) return;
     try {
       const res = await fetch(`${SUPABASE_URL}/rest/v1/workout_logs?id=eq.${id}`, {
@@ -290,7 +304,7 @@ export default function DuoFitEngine() {
 
       {/* NAVIGATION TABS */}
       <div style={{ display: 'flex', gap: '4px', marginBottom: '20px', borderBottom: '1px solid #334155', paddingBottom: '8px' }}>
-        {['Builder', 'Active', 'History'].map(tab => (
+        {(['Builder', 'Active', 'History'] as const).map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -315,7 +329,7 @@ export default function DuoFitEngine() {
         <div>
           <h3 style={{ fontSize: '16px', marginBottom: '8px' }}>1. Select Target Muscle Groups</h3>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '16px' }}>
-            {['Chest', 'Back', 'Shoulders', 'Legs', 'Arms', 'Core'].map(muscle => {
+            {['Chest', 'Back', 'Shoulders', 'Legs', 'Arms', 'Core'].map((muscle: string) => {
               const selected = selectedMuscles.includes(muscle);
               return (
                 <button
@@ -340,7 +354,7 @@ export default function DuoFitEngine() {
           <h3 style={{ fontSize: '16px', marginBottom: '8px' }}>2. Select Workout Format</h3>
           <select
             value={workoutFormat}
-            onChange={(e) => setWorkoutFormat(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setWorkoutFormat(e.target.value)}
             style={{
               width: '100%',
               padding: '12px',
@@ -382,7 +396,7 @@ export default function DuoFitEngine() {
           {generatedRoutine.length === 0 ? (
             <p style={{ color: '#94a3b8' }}>No active routine generated yet. Go to Workout Builder to generate one!</p>
           ) : (
-            generatedRoutine.map((ex, idx) => {
+            generatedRoutine.map((ex: Exercise, idx: number) => {
               const lastStats = getLastSession(ex.name);
               return (
                 <div key={idx} style={{ backgroundColor: '#1e293b', padding: '14px', borderRadius: '8px', marginBottom: '12px' }}>
@@ -412,8 +426,8 @@ export default function DuoFitEngine() {
                     <input
                       type="number"
                       placeholder="Lbs"
-                      value={ex.weightInput}
-                      onChange={(e) => {
+                      value={ex.weightInput || ''}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                         const updated = [...generatedRoutine];
                         updated[idx].weightInput = e.target.value;
                         setGeneratedRoutine(updated);
@@ -423,8 +437,8 @@ export default function DuoFitEngine() {
                     <input
                       type="number"
                       placeholder="Reps"
-                      value={ex.repsInput}
-                      onChange={(e) => {
+                      value={ex.repsInput || ''}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                         const updated = [...generatedRoutine];
                         updated[idx].repsInput = e.target.value;
                         setGeneratedRoutine(updated);
@@ -452,7 +466,7 @@ export default function DuoFitEngine() {
           {logs.length === 0 ? (
             <p style={{ color: '#94a3b8' }}>No recorded workouts yet.</p>
           ) : (
-            logs.map(log => {
+            logs.map((log: WorkoutLog) => {
               const isEditing = editingLogId === log.id;
               const isRoxanne = log.profile === 'Roxanne';
 
@@ -470,14 +484,14 @@ export default function DuoFitEngine() {
                       <input
                         type="number"
                         value={editForm.weight_lbs}
-                        onChange={(e) => setEditForm({ ...editForm, weight_lbs: e.target.value })}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditForm({ ...editForm, weight_lbs: e.target.value })}
                         style={{ width: '65px', padding: '6px', backgroundColor: '#0f172a', color: '#fff', border: '1px solid #334155', borderRadius: '4px' }}
                       />
                       <span>lbs</span>
                       <input
                         type="number"
                         value={editForm.reps}
-                        onChange={(e) => setEditForm({ ...editForm, reps: e.target.value })}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditForm({ ...editForm, reps: e.target.value })}
                         style={{ width: '55px', padding: '6px', backgroundColor: '#0f172a', color: '#fff', border: '1px solid #334155', borderRadius: '4px' }}
                       />
                       <span>reps</span>
