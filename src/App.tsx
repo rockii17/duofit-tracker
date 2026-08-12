@@ -155,6 +155,7 @@ const PLANET_FITNESS_POOL: ExerciseDef[] = [
   { name: 'Ab Mat Crunches', equipment: 'Abs/Core Mats', muscleGroup: 'core' },
   { name: 'Captain’s Chair Leg Raise', equipment: 'Captain’s Chair (Leg Raise Station)', muscleGroup: 'core' },
   { name: 'Hyperextension Back Extension', equipment: 'Back Extension Bench', muscleGroup: 'back' },
+]
 
 export default function App() {
   const [activeProfile, setActiveProfile] = useState<UserProfile>('Roxanne');
