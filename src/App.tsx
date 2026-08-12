@@ -9,7 +9,7 @@ const supabase = (supabaseUrl && supabaseAnonKey) ? createClient(supabaseUrl, su
 type UserProfile = 'Roxanne' | 'Diana';
 type LocationMode = 'garage' | 'planet_fitness';
 type MuscleTarget = 'legs' | 'back' | 'chest' | 'shoulders' | 'arms' | 'core' | 'cardio';
-type WorkoutFormat = 'standard' | 'emom' | 'amrap' | 'pyramid';
+type WorkoutFormat = 'standard' | 'emom' | 'amrap' | 'pyramid' | 'tabata';
 type FilterMode = 'muscle' | 'equipment';
 
 interface ExerciseDef {
@@ -66,6 +66,17 @@ const PROFILE_STYLES = {
 };
 
 const GARAGE_POOL: ExerciseDef[] = [
+  // Bodyweight & Calisthenics
+  { name: 'Push-ups', equipment: 'Bodyweight', muscleGroup: 'chest' },
+  { name: 'Sit-ups', equipment: 'Bodyweight', muscleGroup: 'core' },
+  { name: 'Air Squats', equipment: 'Bodyweight', muscleGroup: 'legs' },
+  { name: 'Bodyweight Walking Lunges', equipment: 'Bodyweight', muscleGroup: 'legs' },
+  { name: 'Plank Hold', equipment: 'Bodyweight', muscleGroup: 'core' },
+  { name: 'Mountain Climbers', equipment: 'Bodyweight', muscleGroup: 'cardio' },
+  { name: 'Burpees', equipment: 'Bodyweight', muscleGroup: 'cardio' },
+  { name: 'Jumping Jacks', equipment: 'Bodyweight', muscleGroup: 'cardio' },
+
+  // Garage Heavy Equipment
   { name: 'Barbell Back Squat', equipment: 'Titan Power Rack & Bumper Plates', muscleGroup: 'legs' },
   { name: 'Goblet Squat', equipment: 'Hex Dumbbells / Kettlebell', muscleGroup: 'legs' },
   { name: 'Landmine Hack Squat', equipment: 'Titan Power Rack (Landmine)', muscleGroup: 'legs' },
@@ -92,6 +103,15 @@ const GARAGE_POOL: ExerciseDef[] = [
 ];
 
 const PLANET_FITNESS_POOL: ExerciseDef[] = [
+  // Bodyweight & Mat Exercises
+  { name: 'Mat Push-ups', equipment: 'Bodyweight / Mat Area', muscleGroup: 'chest' },
+  { name: 'Mat Sit-ups / Crunches', equipment: 'Bodyweight / Mat Area', muscleGroup: 'core' },
+  { name: 'Bodyweight Air Squats', equipment: 'Bodyweight / Mat Area', muscleGroup: 'legs' },
+  { name: 'Bodyweight Lunges', equipment: 'Bodyweight / Mat Area', muscleGroup: 'legs' },
+  { name: 'Plank Hold', equipment: 'Bodyweight / Mat Area', muscleGroup: 'core' },
+  { name: 'Mountain Climbers', equipment: 'Bodyweight / Mat Area', muscleGroup: 'cardio' },
+  { name: 'Jumping Jacks', equipment: 'Bodyweight / Mat Area', muscleGroup: 'cardio' },
+
   // Cardio Machines
   { name: 'Treadmill Run / Walk', equipment: 'Treadmills', muscleGroup: 'cardio' },
   { name: 'Elliptical Striding', equipment: 'Ellipticals', muscleGroup: 'cardio' },
@@ -237,6 +257,7 @@ export default function App() {
 
   const getPrescriptionDetails = (format: WorkoutFormat) => {
     switch (format) {
+      case 'tabata': return { sets: 8, reps: '20s Work / 10s Rest', restSeconds: 10, prescription: '⚡ TABATA (8 rounds: 20s MAX / 10s REST)' };
       case 'emom': return { sets: 4, reps: '8-10', restSeconds: 60, prescription: '⏱️ EMOM (4 sets x 8-10 reps, 60s rest)' };
       case 'amrap': return { sets: 3, reps: '12', restSeconds: 45, prescription: '🔥 AMRAP (3 sets x 12 reps, 45s rest)' };
       case 'pyramid': return { sets: 4, reps: '12-10-8-6', restSeconds: 90, prescription: '📐 Pyramid (4 sets x 12-10-8-6 reps, 90s rest)' };
@@ -290,7 +311,7 @@ export default function App() {
   };
 
   const handleAddSet = () => {
-    if (!exName || !exWeight || !exReps) return;
+    if (!exName || !exReps) return;
     const newSet: StrengthSet = {
       id: Date.now().toString(),
       exerciseName: exName,
@@ -574,8 +595,9 @@ export default function App() {
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '6px' }}>
                   {[
                     { id: 'standard', label: '🎯 Standard (3x10)' },
+                    { id: 'tabata', label: '🔥 TABATA (20s/10s)' },
                     { id: 'emom', label: '⏱️ EMOM (Every Min)' },
-                    { id: 'amrap', label: '🔥 AMRAP (Circuit)' },
+                    { id: 'amrap', label: '💥 AMRAP (Circuit)' },
                     { id: 'pyramid', label: '📐 Pyramid (12-10-8-6)' },
                   ].map((f) => (
                     <button
@@ -618,7 +640,7 @@ export default function App() {
                           {item.name} <span style={{ fontSize: '10px', color: theme.accent, textTransform: 'uppercase' }}>({item.muscleGroup})</span>
                         </div>
                         <div style={{ fontSize: '11px', color: '#10b981', marginTop: '2px' }}>
-                          📋 {item.sets} Sets × {item.reps} Reps | Rest: {item.restSeconds}s
+                          📋 {item.prescription}
                         </div>
                         <div style={{ fontSize: '10px', color: '#94a3b8', marginTop: '1px' }}>Gear: {item.equipment}</div>
                       </div>
@@ -674,7 +696,7 @@ export default function App() {
                 />
                 <input
                   type="number"
-                  placeholder="Weight (lbs)"
+                  placeholder="Weight (lbs, 0 if bodyweight)"
                   value={exWeight}
                   onChange={(e) => setExWeight(e.target.value)}
                   style={{ background: '#0f172a', border: '1px solid #334155', borderRadius: '8px', padding: '8px', color: '#fff', fontSize: '12px' }}
@@ -716,7 +738,7 @@ export default function App() {
                   <div style={{ fontSize: '12px', fontWeight: 'bold', color: theme.accent }}>Staged Sets:</div>
                   {currentSessionSets.map((s, idx) => (
                     <div key={s.id} style={{ fontSize: '12px', color: '#cbd5e1', display: 'flex', justifyContent: 'space-between' }}>
-                      <span>#{idx + 1} {s.exerciseName} - {s.weightLbs} lbs x {s.reps} reps</span>
+                      <span>#{idx + 1} {s.exerciseName} - {s.weightLbs > 0 ? `${s.weightLbs} lbs` : 'Bodyweight'} x {s.reps} reps</span>
                       {s.seatSetting && <span style={{ color: '#c084fc' }}>[Seat: {s.seatSetting}]</span>}
                     </div>
                   ))}
@@ -851,7 +873,7 @@ export default function App() {
                           </div>
                         ) : (
                           <span style={{ fontWeight: 'bold', color: '#f8fafc' }}>
-                            {set.weightLbs} lbs × {set.reps} reps
+                            {set.weightLbs > 0 ? `${set.weightLbs} lbs` : 'Bodyweight'} × {set.reps} reps
                           </span>
                         )}
                       </div>
